@@ -1,14 +1,6 @@
 from enum import Enum
 
 
-action_weights = {
-    "EAT_GREEN_APPLE": 10,
-    "EAT_RED_APPLE": -5,
-    "NOTHING": -1,
-    "DEAD": -100
-}
-
-
 class Actions(Enum):
     UP = 0
     DOWN = 1
@@ -17,12 +9,14 @@ class Actions(Enum):
 
 
 class ActionResult:
-    reward = 0
+    replaced_cell = None
     new_state = None
+    snake_length = None
 
-    def __init__(self, reward, new_state):
-        self.reward = reward
+    def __init__(self, replaced_cell, new_state, snake_length):
+        self.replaced_cell = replaced_cell
         self.new_state = new_state
+        self.snake_length = snake_length
 
 
 def get_coordinates_from_action(action):

@@ -1,6 +1,6 @@
 # Environment constants for the game
 import random
-from action import Actions, get_coordinates_from_action, action_weights, ActionResult
+from action import Actions, get_coordinates_from_action, ActionResult
 from collections import deque
 
 import numpy as np
@@ -16,17 +16,18 @@ RED_APPLE = 5
 class SnakeEnv:
     def __init__(self, map_size: int, snake_start_length: int, red_apple_nb: int, green_apple_nb: int):
         self.snake = deque()
-        self.start_direction = None
-        self.map = np.zeros((map_size + 2, map_size + 2))
+        # self.start_direction = None
+        self.map = None
         self.map_size = map_size
         self.snake_start_length = snake_start_length
         self.red_apple_nb = red_apple_nb
         self.green_apple_nb = green_apple_nb
-        self.apples = {RED_APPLE: set(), GREEN_APPLE: set()}
-        self.setup()
+        self.apples = None
+        self.reset()
 
-    def setup(self):
-        # Generate walls
+    def reset(self):
+        # Generate map and walls
+        self.map = np.zeros((self.map_size + 2, self.map_size + 2))
         self.map[0, :] = WALL
         self.map[-1, :] = WALL
         self.map[:, 0] = WALL
@@ -35,16 +36,19 @@ class SnakeEnv:
         # Generate the snake
         points = generate_contiguous_points(self.map, self.snake_start_length)
         self.snake = deque(points)
-        print(self.snake)
-        print(self.map)
 
         # Set the snake starting direction
-        self.start_direction = (points[0][0] - points[1][0], points[0][1] - points[1][1])
+        # self.start_direction = (points[0][0] - points[1][0], points[0][1] - points[1][1])
 
         # Place apples
+        self.apples = {RED_APPLE: set(), GREEN_APPLE: set()}
         self.place_apple(RED_APPLE, self.red_apple_nb)
         self.place_apple(GREEN_APPLE, self.green_apple_nb)
         pass
+
+
+    def get_snake_length(self):
+        return len(self.snake)
 
 
     def place_apple(self, apple_type, count):
@@ -80,16 +84,16 @@ class SnakeEnv:
         cell_value = self.map[new_head[0], new_head[1]]
 
         if cell_value == WALL:
-            return WALL
+            return ActionResult(WALL, None, self.get_snake_length())
         elif cell_value == BODY:
-            return BODY
+            return ActionResult(BODY, None, self.get_snake_length())
         elif cell_value == GREEN_APPLE:
             self.snake.appendleft(new_head)
             self.map[new_head[0], new_head[1]] = HEAD
             self.map[self.snake[1][0], self.snake[1][1]] = BODY
             self.apples[GREEN_APPLE].remove(new_head)
             self.place_apple(GREEN_APPLE, 1)
-            return GREEN_APPLE
+            return ActionResult(GREEN_APPLE, self.map, self.get_snake_length())
         elif cell_value == RED_APPLE:
             self.snake.appendleft(new_head)
             self.map[new_head[0], new_head[1]] = HEAD
@@ -100,14 +104,15 @@ class SnakeEnv:
                     self.map[tail[0], tail[1]] = EMPTY
             self.apples[RED_APPLE].remove(new_head)
             self.place_apple(RED_APPLE, 1)
-            return RED_APPLE
+            return ActionResult(RED_APPLE, self.map, self.get_snake_length())
         elif cell_value == EMPTY:
             tail = self.snake.pop()
             self.map[tail[0], tail[1]] = EMPTY
             self.snake.appendleft(new_head)
             self.map[new_head[0], new_head[1]] = HEAD
-            self.map[self.snake[1][0], self.snake[1][1]] = BODY
-            return EMPTY
+            if len(self.snake) > 1:
+                self.map[self.snake[1][0], self.snake[1][1]] = BODY
+            return ActionResult(EMPTY, self.map, self.get_snake_length())
         return None
 
 
@@ -131,7 +136,6 @@ def get_next_point(board, previous_x, previous_y, length):
                 next_points = get_next_point(board, previous_x + d[0], previous_y + d[1], length - 1)
                 return [(previous_x + d[0], previous_y + d[1])] + next_points
         else:
-            print("Invalid direction")
             return get_next_point(board, previous_x, previous_y, length)
     except IndexError:
         return get_next_point(board, previous_x, previous_y, length)
