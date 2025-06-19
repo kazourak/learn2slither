@@ -38,6 +38,8 @@ class TitleState(BaseState):
     def handle_selection(self):
         selected_option = self.menu_buttons[self.selected_index]
 
+        if selected_option == "Play":
+            self.game.change_state("GAME")
         if selected_option == "Quit":
             self.game.running = False
 

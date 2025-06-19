@@ -4,6 +4,7 @@ from snake.settings import FONT_DIR, IMG_DIR
 
 class AssetLoader:
     def __init__(self):
+        #TODO: load all images and fonts
         self._image_cache = {}
         self._font_cache  = {}
 

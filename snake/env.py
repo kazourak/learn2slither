@@ -4,7 +4,7 @@ from typing import Deque, List, Optional, Set, Tuple
 
 import numpy as np
 
-from action import Actions, get_coordinates_from_action, ActionResult
+from snake.action import ActionResult
 
 
 # Cell values
@@ -44,10 +44,15 @@ class SnakeEnv:
 
         self.reset()
 
+    def get_state(self) -> np.ndarray:
+        return self.board.copy()
+
     def reset(self) -> None:
         """
         Reset the game state: walls, snake, and apples.
         """
+        self.snake: Deque[Coordinate] = deque()
+        self.apples: dict[int, Set[Coordinate]] = {RED_APPLE: set(), GREEN_APPLE: set()}
         self._init_walls()
         self._place_snake()
         self._place_apples(RED_APPLE, self.red_apple_count)
