@@ -7,14 +7,19 @@ class Actions(Enum):
     LEFT = (-1, 0)
     RIGHT = (1, 0)
 
+class ActionState(Enum):
+    NOTHING = 0,
+    EAT_RED_APPLE = 1,
+    EAT_GREEN_APPLE = 2,
+    DEAD = 3
 
 class ActionResult:
-    replaced_cell = None
+    action_state = None
     new_state = None
     snake_length = None
 
-    def __init__(self, replaced_cell, new_state, snake_length):
-        self.replaced_cell = replaced_cell
+    def __init__(self, action_state, new_state, snake_length):
+        self.action_state = action_state
         self.new_state = new_state
         self.snake_length = snake_length
 

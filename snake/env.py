@@ -4,7 +4,7 @@ from typing import Deque, List, Optional, Set, Tuple
 
 import numpy as np
 
-from snake.action import ActionResult
+from snake.action import ActionResult, ActionState
 
 
 # Cell values
@@ -49,7 +49,7 @@ class SnakeEnv:
 
     def reset(self) -> None:
         """
-        Reset the game state: walls, snake, and apples.
+        Reset the game state: walls, snake, and apples.x
         """
         self.snake: Deque[Coordinate] = deque()
         self.apples: dict[int, Set[Coordinate]] = {RED_APPLE: set(), GREEN_APPLE: set()}
@@ -65,26 +65,25 @@ class SnakeEnv:
         """
         dx, dy = self.direction
         head_x, head_y = self.snake[0]
+        tail = self.snake[-1]
         new_head = (head_x + dx, head_y + dy)
         cell = self.board[new_head]
 
-        if cell in (WALL, BODY):
-            return ActionResult(cell, None, len(self.snake))
+        if cell in (WALL, BODY) and new_head != tail:
+            return ActionResult(ActionState.DEAD, None, len(self.snake))
 
-        # Déplacement de la tête
         self.snake.appendleft(new_head)
         self.board[new_head] = HEAD
         self.board[head_x, head_y] = BODY
 
-        if cell == EMPTY:
-            # Avance normale, on enlève la queue
+        if cell == EMPTY or new_head == tail:
             tail = self.snake.pop()
             self.board[tail] = EMPTY
 
         elif cell == GREEN_APPLE:
-            # On grandit de 1 (ne rien faire, la queue reste)
             self.apples[cell].remove(new_head)
             self._place_apples(cell, 1)
+            return ActionResult(ActionState.EAT_GREEN_APPLE, self.board.copy(), len(self.snake))
 
         elif cell == RED_APPLE:
             self.apples[cell].remove(new_head)
@@ -95,8 +94,9 @@ class SnakeEnv:
                     self.board[tail] = EMPTY
                 else:
                     return ActionResult(RED_APPLE, self.board.copy(), 0)
+            return ActionResult(ActionState.EAT_RED_APPLE, self.board.copy(), len(self.snake))
 
-        return ActionResult(cell, self.board.copy(), len(self.snake))
+        return ActionResult(ActionState.NOTHING, self.board.copy(), len(self.snake))
 
     def _init_walls(self) -> None:
         """Initialize the boundary walls."""
@@ -137,6 +137,7 @@ class SnakeEnv:
     def _available_positions(self) -> List[Coordinate]:
         """Return list of empty coordinates inside the boundary."""
         empties: List[Coordinate] = []
+        print(self.map_size)
         for x in range(1, self.map_size + 1):
             for y in range(1, self.map_size + 1):
                 if self.board[x, y] == EMPTY:

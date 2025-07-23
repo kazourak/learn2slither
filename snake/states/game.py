@@ -2,8 +2,9 @@ from typing import Tuple, Deque, Set
 
 import pygame
 
-from snake.action import Actions, get_coordinates_from_action
+from snake.action import Actions, get_coordinates_from_action, ActionResult, ActionState
 from snake.env import SnakeEnv
+from snake.interpreter import get_state
 from snake.states.base_state import BaseState
 from snake.settings import SCREEN_WIDTH, SCREEN_HEIGHT
 from snake.ui.animated_background import AnimatedGridBackground
@@ -38,12 +39,13 @@ class GameState(BaseState):
         self.board_x = (SCREEN_WIDTH - self.board_size) // 2
         self.board_y = (SCREEN_HEIGHT - self.board_size) // 2
 
-        self.env = SnakeEnv(10, 3, 2, 1)
+        self.env = SnakeEnv(10, 3, 1, 2)
         self.running = True
 
-        self.snake_speed = 6
+        self.snake_speed = 5
         self._snake_timer = 0.0
         self._bg_timer = 0.0
+        self._paused = False
 
         self.current_direction = self.env.direction
         self.pending_direction = self.current_direction
@@ -176,13 +178,15 @@ class GameState(BaseState):
                 new_dir = get_coordinates_from_action(Actions.LEFT)
             elif event.key == pygame.K_RIGHT:
                 new_dir = get_coordinates_from_action(Actions.RIGHT)
+            elif event.key == pygame.K_SPACE:
+                self._paused = not self._paused
+                return
             else:
                 return
 
             opposite = (-self.current_direction[0], -self.current_direction[1])
             if new_dir != opposite:
                 self.pending_direction = new_dir
-
 
 
     def update(self, dt):
@@ -204,13 +208,16 @@ class GameState(BaseState):
 
 
     def _update_snake(self):
+        if self._paused:
+            return
         self.current_direction = self.pending_direction
         self.env.direction = self.current_direction
-        result = self.env.step()
-        if result.snake_length < 1 or result.replaced_cell == WALL or result.replaced_cell == BODY:
+        result: ActionResult = self.env.step()
+        get_state(self.env.snake, self.env.apples)
+
+        if result.snake_length < 1 or result.action_state == ActionState.DEAD:
             self.env.reset()
             self.current_direction = self.env.direction
-
 
     def draw(self, surface):
         self.animated_background.draw(surface)

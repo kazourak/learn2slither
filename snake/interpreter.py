@@ -1,34 +1,70 @@
-from action import ActionResult
+from typing import Tuple, Deque, Set
 
-action_weights = {
-    "GREEN_APPLE": 10,
-    "RED_APPLE": -5,
-    "NOTHING": -1,
-    "DEAD": -100
-}
+import numpy as np
 
+from snake import action
+from snake.action import ActionResult, ActionState
+from snake.env import Coordinate
 
-EMPTY = 0
-WALL = 1
-HEAD = 2
-BODY = 3
 GREEN_APPLE = 4
 RED_APPLE = 5
 
+def get_reward(result: ActionResult) -> float:
+    if result.action_state == ActionState.NOTHING:
+        return 0.1
+    elif result.action_state == ActionState.EAT_GREEN_APPLE:
+        return 100
+    elif result.action_state == ActionState.EAT_RED_APPLE:
+        return -100
+    elif result.action_state == ActionState.DEAD:
+        return -100
+    else:
+        return 0
 
-def get_reward(action: ActionResult):
-    reward_score = 0
 
-    if action.snake_length < 1:
-        reward_score += action_weights["DEAD"]
+def get_state(snake: Deque[Coordinate], apples: dict[int, Set[Coordinate]]) -> tuple:
+    head_coord = snake[0]
+    snake_without_tail = list(snake)[:-1]
+    state = []
 
-    if action.replaced_cell == EMPTY:
-        reward_score += action_weights["NOTHING"]
-    elif action.replaced_cell in (BODY, WALL):
-        reward_score += action_weights["DEAD"]
-    elif action.replaced_cell == GREEN_APPLE:
-        reward_score += action_weights["GREEN_APPLE"]
-    elif action.replaced_cell == RED_APPLE:
-        reward_score += action_weights["RED_APPLE"]
+    directions = [(0,-1), (0,1), (-1,0), (1,0)]  # up, down, left, right
 
-    return reward_score
+    for dx, dy in directions:
+        next_pos = (head_coord[0] + dx, head_coord[1] + dy)
+        danger = ((next_pos in snake_without_tail) or
+                  next_pos[0] < 1 or next_pos[0] >= 11 or
+                  next_pos[1] < 1 or next_pos[1] >= 11)
+        state.append(int(danger))
+
+        # TODO: change max-dist to grid size
+        green_apple_close = apple_in_direction(apples, head_coord, (dx, dy), GREEN_APPLE,  10)
+        red_apple_close = apple_in_direction(apples, head_coord, (dx, dy), RED_APPLE)
+        state.append(int(green_apple_close))
+        state.append(int(red_apple_close))
+
+    labels = [
+        "Danger up", "Green apple up", "Red apple up",
+        "Danger down", "Green apple down", "Red apple down",
+        "Danger left", "Green apple left", "Red apple left",
+        "Danger right", "Green apple right", "Red apple right"
+    ]
+
+    print(tuple(state))
+    return tuple(state)
+
+
+def apple_in_direction(apples: dict[int, Set[Coordinate]], head_pos, direction, apple_type, max_dist=3):
+    dx, dy = direction
+    x, y = head_pos
+
+    for distance in range(1, max_dist + 1):
+        check_x = x + (dx * distance)
+        check_y = y + (dy * distance)
+
+        if check_x < 1 or check_x >= 11 or check_y < 1 or check_y >= 11:
+            break
+
+        if (check_x, check_y) in apples[apple_type]:
+            return True
+
+    return False
