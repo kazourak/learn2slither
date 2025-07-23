@@ -1,8 +1,5 @@
 from typing import Tuple, Deque, Set
 
-import numpy as np
-
-from snake import action
 from snake.action import ActionResult, ActionState
 from snake.env import Coordinate
 
@@ -11,13 +8,13 @@ RED_APPLE = 5
 
 def get_reward(result: ActionResult) -> float:
     if result.action_state == ActionState.NOTHING:
-        return 0.1
+        return -0.1
     elif result.action_state == ActionState.EAT_GREEN_APPLE:
-        return 100
+        return 2
     elif result.action_state == ActionState.EAT_RED_APPLE:
-        return -100
+        return -2
     elif result.action_state == ActionState.DEAD:
-        return -100
+        return -10
     else:
         return 0
 
@@ -38,7 +35,7 @@ def get_state(snake: Deque[Coordinate], apples: dict[int, Set[Coordinate]]) -> t
 
         # TODO: change max-dist to grid size
         green_apple_close = apple_in_direction(apples, head_coord, (dx, dy), GREEN_APPLE,  10)
-        red_apple_close = apple_in_direction(apples, head_coord, (dx, dy), RED_APPLE)
+        red_apple_close = apple_in_direction(apples, head_coord, (dx, dy), RED_APPLE, 3)
         state.append(int(green_apple_close))
         state.append(int(red_apple_close))
 
@@ -49,7 +46,6 @@ def get_state(snake: Deque[Coordinate], apples: dict[int, Set[Coordinate]]) -> t
         "Danger right", "Green apple right", "Red apple right"
     ]
 
-    print(tuple(state))
     return tuple(state)
 
 

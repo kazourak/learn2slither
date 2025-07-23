@@ -213,7 +213,16 @@ class GameState(BaseState):
         self.current_direction = self.pending_direction
         self.env.direction = self.current_direction
         result: ActionResult = self.env.step()
-        get_state(self.env.snake, self.env.apples)
+        state = get_state(self.env.snake, self.env.apples)
+        labels = [
+            "Danger up", "Green apple up", "Red apple up",
+            "Danger down", "Green apple down", "Red apple down",
+            "Danger left", "Green apple left", "Red apple left",
+            "Danger right", "Green apple right", "Red apple right"
+        ]
+        print("=" * 20)
+        for label, value in zip(labels, state):
+            print(f"{label}: {value}")
 
         if result.snake_length < 1 or result.action_state == ActionState.DEAD:
             self.env.reset()

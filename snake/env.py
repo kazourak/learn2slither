@@ -137,7 +137,6 @@ class SnakeEnv:
     def _available_positions(self) -> List[Coordinate]:
         """Return list of empty coordinates inside the boundary."""
         empties: List[Coordinate] = []
-        print(self.map_size)
         for x in range(1, self.map_size + 1):
             for y in range(1, self.map_size + 1):
                 if self.board[x, y] == EMPTY:

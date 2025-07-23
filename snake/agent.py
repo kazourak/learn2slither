@@ -3,10 +3,10 @@ import random
 import pickle
 from collections import defaultdict
 
-ACTIONS = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+ACTIONS = ['UP', 'DOWN', 'LEFT', 'RIGHT']
 
 class QLearningSnakeAgent:
-    def __init__(self, alpha=0.1, gamma=0.9, epsilon=1.0, eps_decay=0.995):
+    def __init__(self, alpha=0.1, gamma=0.9, epsilon=1.0, eps_decay=0.9995):
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
@@ -14,13 +14,11 @@ class QLearningSnakeAgent:
 
         self.q_table = defaultdict(lambda: [0.0] * len(ACTIONS))
 
-    def choose_action(self, state: np.ndarray) -> tuple:
+    def choose_action(self, state: tuple):
         if random.random() < self.epsilon:
-            return random.choice(ACTIONS)
-
+            return random.randrange(len(ACTIONS))
         q_values = self.q_table[state]
-        best_action_idx = int(np.argmax(q_values))
-        return ACTIONS[best_action_idx]
+        return int(np.argmax(q_values))
 
     def update(self, state, action, reward, next_state, done):
         """
