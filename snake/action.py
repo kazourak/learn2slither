@@ -17,11 +17,13 @@ class ActionResult:
     action_state = None
     new_state = None
     snake_length = None
+    cause_death = None
 
-    def __init__(self, action_state, new_state, snake_length):
+    def __init__(self, action_state, new_state, snake_length, cause_death=None):
         self.action_state = action_state
         self.new_state = new_state
         self.snake_length = snake_length
+        self.cause_death = cause_death
 
 
 def index_to_action_tuple(index: int) -> tuple[int, int]:

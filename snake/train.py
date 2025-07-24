@@ -1,4 +1,9 @@
-import time
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import List
+
+from tqdm import trange
 
 from snake.action import ActionResult, index_to_action_tuple, ActionState
 from snake.agent import QLearningSnakeAgent
@@ -7,95 +12,161 @@ from snake.interpreter import get_state, get_reward
 
 import numpy as np
 
-def train(agent: QLearningSnakeAgent, env: SnakeEnv, num_episodes, max_steps_per_episode, model_path=None):
-    snake_len = []
-    for episode in range(num_episodes):
-        env.reset()
-        state = get_state(env.snake, env.apples)
-        total_reward = 0.0
-        done = False
-        step = 0
 
-        while not done and step < max_steps_per_episode:
-            action_idx: int = agent.choose_action(state)
-            if episode > 20000:
-                print_board(env.board)
-                time.sleep(0.1)
+@dataclass
+class PhaseConfig:
+    """
+    Décrit une phase d’entraînement / d’évaluation.
 
-            env.direction = index_to_action_tuple(action_idx)
-            result: ActionResult = env.step()
-            if result.action_state == ActionState.DEAD:
-                done = True
+    - name      : Name TQDM progress bar.
+    - episodes  : Numbers of episodes to perform in this phase.
+    - eps_start : Epsilon initial. Default: 0.
+    - eps_end   : Final epsilon. Default: 0.
+    - train     : True  -> Q-Learning actif (Exploration/Exploitation).
+                  False -> Pas d’apprentissage, simple évaluation.
+    """
+    name: str
+    episodes: int
+    eps_start: float = 0.0
+    eps_end: float = 0.0
+    train: bool = True
 
-            next_state = get_state(env.snake, env.apples)
-            reward = get_reward(result)
-            total_reward += reward
+    @property
+    def eps_decay(self) -> float:
+        if self.eps_start == 0 or self.episodes <= 1:
+            return 1.0
+        return (self.eps_end / self.eps_start) ** (1 / self.episodes)
 
-            agent.update(state, action_idx, reward, next_state, done)
-            state = next_state
-            step += 1
 
-        snake_len.append(len(env.snake))
-        agent.decay_epsilon()
+def train_with_phases(
+        agent: QLearningSnakeAgent,
+        env: SnakeEnv,
+        phases: List[PhaseConfig],
+        max_steps_per_episode: int,
+        model_path: str | None = None,
+):
+    global_episode = 0
 
-        if (episode + 1) % 100 == 0:
-            print(f"Episode {episode+1}/{num_episodes}, Total reward: {total_reward:.2f}, Epsilon: {agent.epsilon:.3f}")
+    for phase in phases:
+        agent.epsilon = phase.eps_start
+        agent.eps_decay = phase.eps_decay
+        agent.is_train = phase.train
 
-        if (episode + 1) % 1000 == 0:
-            avg_length = np.median(snake_len)
-            print(f"➡️ Medianne de la taille du snake (épisodes {episode-999} à {episode}): {avg_length:.2f}")
-            snake_len = []  # Réinitialisation
+        iterator = trange(
+            phase.episodes,
+            desc=f"Phase: {phase.name}",
+            unit="ep",
+            leave=True,
+        )
+
+        for local_ep in iterator:
+            global_episode += 1
+            env.reset()
+
+            state = get_state(env.snake, env.board, env.direction)
+            total_reward = 0.0
+            done = False
+            step = 0
+
+            while not done and step < max_steps_per_episode:
+                action_idx = agent.choose_action(state)
+
+                env.direction = index_to_action_tuple(action_idx)
+                result: ActionResult = env.step()
+                if result.action_state == ActionState.DEAD:
+                    done = True
+
+                next_state = get_state(env.snake, env.board, env.direction)
+                reward = get_reward(result)
+                total_reward += reward
+
+                if agent.is_train:
+                    agent.update(state, action_idx, reward, next_state, done)
+
+                state = next_state
+                step += 1
+
+            if agent.is_train:
+                agent.decay_epsilon()
+
+
+            # if global_episode % 1000 == 0:
+            #     iterator.write(
+            #         f"Episode {global_episode} | "
+            #         f"phase «{phase.name}» ({local_ep + 1}/{phase.episodes}) | "
+            #         f"reward={total_reward:.2f} | "
+            #         f"eps={agent.epsilon:.4f}"
+            #     )
 
     if model_path:
         agent.save_model(model_path)
-        print(f"Modèle sauvegardé dans {model_path}")
-
-import os
-
-# Cell types
-EMPTY = 0
-WALL = 1
-HEAD = 2
-BODY = 3
-GREEN_APPLE = 4
-RED_APPLE = 5
-
-# ANSI escape sequences
-_RESET = '\033[0m'
-_BLACK_BG = '\033[40m'
-_WHITE_FG = '\033[97m'
-_GREEN_FG = '\033[92m'
-_RED_FG = '\033[91m'
-_YELLOW_FG = '\033[93m'
-_BLUE_FG = '\033[94m'
-
-# Mapping from cell value → colored string
-_CELL_CHARS = {
-    EMPTY:    f'{_BLACK_BG}   {_RESET}',                 # black background
-    WALL:     f'{_BLACK_BG}{_WHITE_FG} # {_RESET}',      # white wall on black
-    HEAD:     f'{_BLACK_BG}{_YELLOW_FG} H {_RESET}',     # yellow head
-    BODY:     f'{_BLACK_BG}{_GREEN_FG} o {_RESET}',      # green body
-    GREEN_APPLE: f'{_BLACK_BG}{_GREEN_FG} G {_RESET}',   # bright green apple
-    RED_APPLE:   f'{_BLACK_BG}{_RED_FG} R {_RESET}',     # bright red apple
-}
-
-def print_board(board: np.ndarray, clear_screen: bool = True):
-    """
-    Print the snake game board to the terminal with colors.
-
-    Args:
-        board (np.ndarray): 2D array of ints encoding cell types.
-        clear_screen (bool): If True, clears the terminal before printing.
-    """
-    if clear_screen:
-        os.system('cls' if os.name == 'nt' else 'clear')
-
-    for row in board:
-        line = ''.join(_CELL_CHARS.get(int(cell), f'{_BLACK_BG}? {_RESET}') for cell in row)
-        print(line)
+        print(f"✅ Modèle sauvegardé dans {model_path}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     env = SnakeEnv(10, 3, 1, 2)
     agent = QLearningSnakeAgent()
-    train(agent, env, num_episodes=100000, max_steps_per_episode=100000, model_path='snake.pkl')
+
+    phases_cfg = [
+        # 1. Warm‑up / Découverte aléatoire
+        PhaseConfig(
+            name="Warm‑up aléatoire",
+            episodes=10_000,
+            eps_start=1.00,
+            eps_end=0.80,
+            train=True
+        ),
+
+        # 2. Exploration intensive
+        PhaseConfig(
+            name="Exploration intensive",
+            episodes=40_000,
+            eps_start=0.80,
+            eps_end=0.30,
+            train=True
+        ),
+
+        # 3. Exploration modérée (annealing plus lentement)
+        PhaseConfig(
+            name="Exploration modérée",
+            episodes=80_000,
+            eps_start=0.30,
+            eps_end=0.05,
+            train=True
+        ),
+
+        # 4. Exploitation / Raffinement
+        PhaseConfig(
+            name="Exploitation poussée",
+            episodes=30_000,
+            eps_start=0.05,
+            eps_end=0.01,
+            train=True
+        ),
+
+        # 5. Stabilisation (epsilon fixe pour stabiliser les Q‑valeurs)
+        PhaseConfig(
+            name="Stabilisation",
+            episodes=10_000,
+            eps_start=0.01,
+            eps_end=0.01,
+            train=True
+        ),
+
+        # 6. Évaluation finale (greedy)
+        PhaseConfig(
+            name="Évaluation finale",
+            episodes=5_000,
+            eps_start=0.00,
+            eps_end=0.00,
+            train=False
+        ),
+    ]
+
+    train_with_phases(
+        agent=agent,
+        env=env,
+        phases=phases_cfg,
+        max_steps_per_episode=10000,
+        model_path="snake.pkl",
+    )

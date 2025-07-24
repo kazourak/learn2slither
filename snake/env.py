@@ -70,7 +70,7 @@ class SnakeEnv:
         cell = self.board[new_head]
 
         if cell in (WALL, BODY) and new_head != tail:
-            return ActionResult(ActionState.DEAD, None, len(self.snake))
+            return ActionResult(ActionState.DEAD, None, len(self.snake), cell)
 
         self.snake.appendleft(new_head)
         self.board[new_head] = HEAD

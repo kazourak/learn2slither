@@ -2,7 +2,8 @@ from typing import Tuple, Deque, Set
 
 import pygame
 
-from snake.action import Actions, get_coordinates_from_action, ActionResult, ActionState
+from snake.action import Actions, get_coordinates_from_action, ActionResult, ActionState, index_to_action_tuple
+from snake.agent import QLearningSnakeAgent
 from snake.env import SnakeEnv
 from snake.interpreter import get_state
 from snake.states.base_state import BaseState
@@ -40,16 +41,15 @@ class GameState(BaseState):
         self.board_y = (SCREEN_HEIGHT - self.board_size) // 2
 
         self.env = SnakeEnv(10, 3, 1, 2)
+        self.agent = QLearningSnakeAgent(filename="snake.pkl")
         self.running = True
 
-        self.snake_speed = 5
+        self.snake_speed = 50
         self._snake_timer = 0.0
         self._bg_timer = 0.0
         self._paused = False
 
         self.current_direction = self.env.direction
-        self.pending_direction = self.current_direction
-
 
         def scale(img):
             return pygame.transform.scale(img, (self.cell_size, self.cell_size))
@@ -170,27 +170,12 @@ class GameState(BaseState):
 
     def handle_events(self, event):
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_UP:
-                new_dir = get_coordinates_from_action(Actions.UP)
-            elif event.key == pygame.K_DOWN:
-                new_dir = get_coordinates_from_action(Actions.DOWN)
-            elif event.key == pygame.K_LEFT:
-                new_dir = get_coordinates_from_action(Actions.LEFT)
-            elif event.key == pygame.K_RIGHT:
-                new_dir = get_coordinates_from_action(Actions.RIGHT)
-            elif event.key == pygame.K_SPACE:
+            if event.key == pygame.K_SPACE:
                 self._paused = not self._paused
                 return
-            else:
-                return
-
-            opposite = (-self.current_direction[0], -self.current_direction[1])
-            if new_dir != opposite:
-                self.pending_direction = new_dir
 
 
     def update(self, dt):
-
         self._bg_timer += dt
         self._snake_timer += dt
 
@@ -210,10 +195,13 @@ class GameState(BaseState):
     def _update_snake(self):
         if self._paused:
             return
-        self.current_direction = self.pending_direction
-        self.env.direction = self.current_direction
+
+        state = get_state(self.env.snake, self.env.board, self.current_direction)
+        action_idx = self.agent.choose_action(state)
+        self.env.direction = index_to_action_tuple(action_idx)
+        self.current_direction = self.env.direction
         result: ActionResult = self.env.step()
-        state = get_state(self.env.snake, self.env.apples)
+        state = get_state(self.env.snake, self.env.board, self.current_direction)
         labels = [
             "Danger up", "Green apple up", "Red apple up",
             "Danger down", "Green apple down", "Red apple down",
@@ -221,10 +209,12 @@ class GameState(BaseState):
             "Danger right", "Green apple right", "Red apple right"
         ]
         print("=" * 20)
+        print(f" taille labels{len(labels)}")
         for label, value in zip(labels, state):
-            print(f"{label}: {value}")
+            print(f"{label}: [{value}]")
 
         if result.snake_length < 1 or result.action_state == ActionState.DEAD:
+            print(f"Snake dead, max len: {result.snake_length}")
             self.env.reset()
             self.current_direction = self.env.direction
 

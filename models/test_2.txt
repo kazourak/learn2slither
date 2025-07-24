@@ -1,0 +1,9 @@
+Eat green apple: 196985
+Eat red apple: 9424
+Dead by wall: 2614
+Dead by body: 7318
+Dead by size: 0
+Stopped: 68
+Min snake length: 1
+Max snake length: 51
+Median snake length: 11
