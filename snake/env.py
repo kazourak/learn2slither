@@ -118,6 +118,7 @@ class SnakeEnv:
                 head_x, head_y = points[0]
                 neck_x, neck_y = points[1]
                 self.direction = (head_x - neck_x, head_y - neck_y)
+                print(f"init direct {self.direction}")
                 return
             except RuntimeError:
                 attempts += 1

@@ -41,15 +41,13 @@ class GameState(BaseState):
         self.board_y = (SCREEN_HEIGHT - self.board_size) // 2
 
         self.env = SnakeEnv(10, 3, 1, 2)
-        self.agent = QLearningSnakeAgent(filename="snake_optimized.pkl")
+        self.agent = QLearningSnakeAgent(filename="snake.pkl")
         self.running = True
 
-        self.snake_speed = 60
+        self.snake_speed = 3
         self._snake_timer = 0.0
         self._bg_timer = 0.0
         self._paused = False
-
-        self.current_direction = self.env.direction
 
         def scale(img):
             return pygame.transform.scale(img, (self.cell_size, self.cell_size))
@@ -196,26 +194,29 @@ class GameState(BaseState):
         if self._paused:
             return
 
-        state = get_state(self.env.snake, self.env.board, self.current_direction)
+        print("je check direction :")
+        print(self.env.direction)
+        state = get_state(self.env.snake, self.env.board, self.env.direction)
         action_idx = self.agent.choose_action(state)
         self.env.direction = index_to_action_tuple(action_idx)
-        self.current_direction = self.env.direction
         result: ActionResult = self.env.step()
-        # state = get_state(self.env.snake, self.env.board, self.current_direction)
-        # labels = [
-        #     "danger_up", "danger_down", "danger_left", "danger_right",
-        #     "obj_up", "obj_down", "obj_left", "obj_right",
-        #     "move_up", "move_down", "move_left", "move_right"
-        # ]
-        # print("=" * 20)
-        # print(f" taille labels{len(labels)}")
-        # for label, value in zip(labels, state):
-        #     print(f"{label}: [{value}]")
+        print("jai step")
+        state = get_state(self.env.snake, self.env.board, self.env.direction)
+        labels = [
+            "danger_up", "danger_down", "danger_left", "danger_right",
+            "obj_up", "obj_down", "obj_left", "obj_right",
+            "dist_up", "dist_down", "dist_left", "dist_right",
+            "last_move_up", "last_move_down", "last_move_left", "last_move_right",
+        ]
+        print("=" * 20)
+        print(f" taille labels{len(labels)}")
+        for label, value in zip(labels, state):
+            print(f"{label}: [{value}]")
+        print(f"je suis dans la direction {self.env.direction}")
 
         if result.snake_length < 1 or result.action_state == ActionState.DEAD:
             print(f"Snake dead, max len: {result.snake_length}")
             self.env.reset()
-            self.current_direction = self.env.direction
 
     def draw(self, surface):
         self.animated_background.draw(surface)
@@ -223,4 +224,4 @@ class GameState(BaseState):
 
         self.draw_apples(surface, "RED_APPLE", self.env.apples[5])
         self.draw_apples(surface, "GREEN_APPLE", self.env.apples[4])
-        self.draw_snake(surface, self.env.snake, self.current_direction)
+        self.draw_snake(surface, self.env.snake, self.env.direction)

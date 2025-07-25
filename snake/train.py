@@ -135,9 +135,7 @@ if __name__ == "__main__":
         eps_min=0.001        # Minimum epsilon
     )
 
-    # Phases d'entraînement optimisées pour Snake Q-Learning
     phases_cfg = [
-        # Phase 1: Exploration initiale pure (découverte de l'environnement)
         PhaseConfig(
             name="🔍 Exploration initiale",
             episodes=15_000,
@@ -146,58 +144,52 @@ if __name__ == "__main__":
             train=True
         ),
 
-        # Phase 2: Exploration intensive (apprentissage des règles de base)
         PhaseConfig(
-            name="🚀 Exploration intensive",
+            name="Exploration intensive",
             episodes=50_000,
             eps_start=0.70,
             eps_end=0.30,
             train=True
         ),
 
-        # Phase 3: Équilibrage exploration/exploitation
         PhaseConfig(
-            name="⚖️ Équilibrage Exp/Exp",
+            name="Équilibrage Exp/Exp",
             episodes=75_000,
             eps_start=0.30,
             eps_end=0.10,
             train=True
         ),
 
-        # Phase 4: Exploitation dominante
         PhaseConfig(
-            name="🎯 Exploitation dominante",
+            name="Exploitation dominante",
             episodes=40_000,
             eps_start=0.10,
             eps_end=0.02,
             train=True
         ),
 
-        # Phase 5: Fine-tuning avec exploration minimale
         PhaseConfig(
-            name="⚡ Fine-tuning",
+            name="Fine-tuning",
             episodes=20_000,
             eps_start=0.02,
             eps_end=0.005,
             train=True
         ),
 
-        # Phase 6: Stabilisation finale
         PhaseConfig(
-            name="🔒 Stabilisation",
+            name="Stabilisation",
             episodes=10_000,
             eps_start=0.005,
             eps_end=0.001,
             train=True
         ),
 
-        # Phase 7: Évaluation finale (optionnelle)
         PhaseConfig(
-            name="📈 Évaluation finale",
+            name="finale",
             episodes=5_000,
             eps_start=0.0,
             eps_end=0.0,
-            train=False  # Pas d'apprentissage, juste évaluation
+            train=False
         ),
     ]
 
@@ -211,7 +203,7 @@ if __name__ == "__main__":
         env=env,
         phases=phases_cfg,
         max_steps_per_episode=10000,
-        model_path="snake_optimized.pkl",
+        model_path="snake.pkl",
     )
 
     print("🎉 Entraînement terminé!")

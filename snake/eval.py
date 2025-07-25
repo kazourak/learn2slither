@@ -58,20 +58,20 @@ def evaluate(agent: QLearningSnakeAgent, env: SnakeEnv, episodes=10000, max_step
     max_length = max(snake_lengths) if snake_lengths else 0
     median_length = statistics.median(snake_lengths) if snake_lengths else 0
 
-    # print(f"Eat green apple: {eat_green_apple}")
-    # print(f"Eat red apple: {eat_red_apple}")
-    # print(f"Dead by wall: {dead_by_wall}")
-    # print(f"Dead by body: {dead_by_body}")
-    # print(f"Dead by size: {dead_by_size}")
-    # print(f"Stopped: {stopped}")
-    # print(f"Min snake length: {min_length}")
-    # print(f"Max snake length: {max_length}")
-    # print(f"Median snake length: {median_length}")
+    print(f"Eat green apple: {eat_green_apple}")
+    print(f"Eat red apple: {eat_red_apple}")
+    print(f"Dead by wall: {dead_by_wall}")
+    print(f"Dead by body: {dead_by_body}")
+    print(f"Dead by size: {dead_by_size}")
+    print(f"Stopped: {stopped}")
+    print(f"Min snake length: {min_length}")
+    print(f"Max snake length: {max_length}")
+    print(f"Median snake length: {median_length}")
     return min_length, max_length, median_length
 
 
 
 if __name__ == "__main__":
     env = SnakeEnv(10, 3, 1, 2)
-    agent = QLearningSnakeAgent(filename="snake_optimized.pkl")
+    agent = QLearningSnakeAgent(filename="snake.pkl")
     evaluate(agent, env, episodes=10000, max_step=10000)

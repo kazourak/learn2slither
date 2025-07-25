@@ -37,7 +37,9 @@ def get_state(
     """
     État = tuple de 12 entiers :
     [ danger_up, danger_down, danger_left, danger_right,
-      obj_up,    obj_down,    obj_left,    obj_right ]
+      obj_up,    obj_down,    obj_left,    obj_right,
+      dist_up,   dist_down,   dist_left,   dist_right,
+      last_move_up, last_move_down, last_move_left, last_move_right ]
     """
 
     head_x, head_y = snake[0]
@@ -75,6 +77,31 @@ def get_state(
             else:
                 step += 1
         state.append(obj)
+
+    for dx, dy in directions:
+        step = 1
+        dist = 0
+        while True:
+            x = head_x + dx * step
+            y = head_y + dy * step
+            cell = board[x][y]
+
+            if (x, y) in body or cell == WALL:
+                if step <= 3:
+                    dist = 0
+                elif step <= 6:
+                    dist = 1
+                else:
+                    dist = 2
+                break
+            else:
+                step += 1
+        state.append(dist)
+
+    state.append(int(current_direction == (0, -1)))
+    state.append(int(current_direction == (0, 1)))
+    state.append(int(current_direction == (-1, 0)))
+    state.append(int(current_direction == (1, 0)))
 
     return tuple(state)
 
