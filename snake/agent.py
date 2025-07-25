@@ -35,6 +35,7 @@ class QLearningSnakeAgent:
             return random.randrange(len(ACTIONS))
 
         q_values = self.q_table[state]
+        print(q_values)
         return np.argmax(q_values)
 
     def update(self, state, action, reward, next_state, done):
@@ -97,7 +98,6 @@ class QLearningSnakeAgent:
 
     def load_model(self, path):
         """Charge un modèle sauvegardé"""
-        print(path)
         try:
             with open(path, 'rb') as f:
                 data = pickle.load(f)

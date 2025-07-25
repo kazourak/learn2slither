@@ -5,7 +5,7 @@ import pygame
 from snake.action import Actions, get_coordinates_from_action, ActionResult, ActionState, index_to_action_tuple
 from snake.agent import QLearningSnakeAgent
 from snake.env import SnakeEnv
-from snake.interpreter import get_state
+from snake.interpreter import Interpreter
 from snake.states.base_state import BaseState
 from snake.settings import SCREEN_WIDTH, SCREEN_HEIGHT
 from snake.ui.animated_background import AnimatedGridBackground
@@ -42,9 +42,10 @@ class GameState(BaseState):
 
         self.env = SnakeEnv(10, 3, 1, 2)
         self.agent = QLearningSnakeAgent(filename="snake.pkl")
+        self.interpreter = Interpreter()
         self.running = True
 
-        self.snake_speed = 3
+        self.snake_speed = 4
         self._snake_timer = 0.0
         self._bg_timer = 0.0
         self._paused = False
@@ -194,25 +195,19 @@ class GameState(BaseState):
         if self._paused:
             return
 
-        print("je check direction :")
-        print(self.env.direction)
-        state = get_state(self.env.snake, self.env.board, self.env.direction)
+        state = self.interpreter.get_state(self.env.snake, self.env.board, self.env.direction)
         action_idx = self.agent.choose_action(state)
         self.env.direction = index_to_action_tuple(action_idx)
         result: ActionResult = self.env.step()
-        print("jai step")
-        state = get_state(self.env.snake, self.env.board, self.env.direction)
+        state = self.interpreter.get_state(self.env.snake, self.env.board, self.env.direction)
         labels = [
             "danger_up", "danger_down", "danger_left", "danger_right",
             "obj_up", "obj_down", "obj_left", "obj_right",
-            "dist_up", "dist_down", "dist_left", "dist_right",
-            "last_move_up", "last_move_down", "last_move_left", "last_move_right",
         ]
         print("=" * 20)
         print(f" taille labels{len(labels)}")
         for label, value in zip(labels, state):
             print(f"{label}: [{value}]")
-        print(f"je suis dans la direction {self.env.direction}")
 
         if result.snake_length < 1 or result.action_state == ActionState.DEAD:
             print(f"Snake dead, max len: {result.snake_length}")

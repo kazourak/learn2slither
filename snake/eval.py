@@ -1,7 +1,7 @@
 from snake.action import index_to_action_tuple, ActionResult, ActionState
 from snake.agent import QLearningSnakeAgent
 from snake.env import SnakeEnv
-from snake.interpreter import get_state
+from snake.interpreter import Interpreter
 import statistics
 from tqdm import tqdm  # Added tqdm for progress indication
 
@@ -9,7 +9,7 @@ WALL = 1
 BODY = 3
 
 
-def evaluate(agent: QLearningSnakeAgent, env: SnakeEnv, episodes=10000, max_step=10000):
+def evaluate(agent: QLearningSnakeAgent, env: SnakeEnv, interpreter: Interpreter, episodes=10000, max_step=10000):
     eat_green_apple = 0
     eat_red_apple = 0
     dead_by_wall = 0
@@ -29,7 +29,7 @@ def evaluate(agent: QLearningSnakeAgent, env: SnakeEnv, episodes=10000, max_step
                 stopped += 1
                 break
 
-            state = get_state(env.snake, env.board, env.direction)
+            state = interpreter.get_state(env.snake, env.board, env.direction)
             action_idx = agent.choose_action(state)
             env.direction = index_to_action_tuple(action_idx)
             result: ActionResult = env.step()
@@ -67,6 +67,7 @@ def evaluate(agent: QLearningSnakeAgent, env: SnakeEnv, episodes=10000, max_step
     print(f"Min snake length: {min_length}")
     print(f"Max snake length: {max_length}")
     print(f"Median snake length: {median_length}")
+    print(snake_lengths)
     return min_length, max_length, median_length
 
 
@@ -74,4 +75,5 @@ def evaluate(agent: QLearningSnakeAgent, env: SnakeEnv, episodes=10000, max_step
 if __name__ == "__main__":
     env = SnakeEnv(10, 3, 1, 2)
     agent = QLearningSnakeAgent(filename="snake.pkl")
-    evaluate(agent, env, episodes=10000, max_step=10000)
+    interpreter = Interpreter()
+    evaluate(agent, env, interpreter, episodes=1000, max_step=1000)
