@@ -26,7 +26,6 @@ class QLearningSnakeAgent:
         }
 
         if filename:
-            print('ok')
             self.load_model(filename)
 
     def choose_action(self, state: tuple):
@@ -35,7 +34,6 @@ class QLearningSnakeAgent:
             return random.randrange(len(ACTIONS))
 
         q_values = self.q_table[state]
-        print(q_values)
         return np.argmax(q_values)
 
     def update(self, state, action, reward, next_state, done):
@@ -104,7 +102,6 @@ class QLearningSnakeAgent:
 
             # Charger la Q-table
             if isinstance(data, dict) and 'q_table' in data:
-                print('charge')
                 # Nouveau format avec métadonnées
                 self.q_table = defaultdict(lambda: np.zeros(len(ACTIONS)),
                                            data['q_table'])

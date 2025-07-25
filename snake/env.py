@@ -59,10 +59,6 @@ class SnakeEnv:
         self._place_apples(GREEN_APPLE, self.green_apple_count)
 
     def step(self) -> ActionResult:
-        """
-        Effectue une action et met à jour l'environnement.
-        Retourne un ActionResult contenant les infos de collision ou de pomme mangée, le plateau mis à jour et la longueur du serpent.
-        """
         dx, dy = self.direction
         head_x, head_y = self.snake[0]
         tail = self.snake[-1]
