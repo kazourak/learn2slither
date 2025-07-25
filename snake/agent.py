@@ -119,6 +119,7 @@ class QLearningSnakeAgent:
             # Réinitialiser avec des valeurs par défaut
             self.q_table = defaultdict(lambda: np.zeros(len(ACTIONS)))
 
+
     def print_training_info(self):
         """Affiche des informations sur l'entraînement"""
         stats = self.training_stats

@@ -41,11 +41,16 @@ class GameState(BaseState):
         self.board_y = (SCREEN_HEIGHT - self.board_size) // 2
 
         self.env = SnakeEnv(10, 3, 1, 2)
-        self.agent = QLearningSnakeAgent(filename="snake.pkl")
-        self.interpreter = Interpreter()
+        r_nothing = -1.23
+        r_eat_green = 20.58
+        r_eat_red = -28.16
+        r_dead = -113.51
+        self.interpreter = Interpreter(reward_nothing=r_nothing, reward_dead=r_dead, reward_red_apple=r_eat_red, reward_green_apple=r_eat_green)
+
+        self.agent = QLearningSnakeAgent(filename="best_model.pkl")
         self.running = True
 
-        self.snake_speed = 4
+        self.snake_speed = 100
         self._snake_timer = 0.0
         self._bg_timer = 0.0
         self._paused = False
@@ -199,15 +204,15 @@ class GameState(BaseState):
         action_idx = self.agent.choose_action(state)
         self.env.direction = index_to_action_tuple(action_idx)
         result: ActionResult = self.env.step()
-        state = self.interpreter.get_state(self.env.snake, self.env.board, self.env.direction)
-        labels = [
-            "danger_up", "danger_down", "danger_left", "danger_right",
-            "obj_up", "obj_down", "obj_left", "obj_right",
-        ]
-        print("=" * 20)
-        print(f" taille labels{len(labels)}")
-        for label, value in zip(labels, state):
-            print(f"{label}: [{value}]")
+        # state = self.interpreter.get_state(self.env.snake, self.env.board, self.env.direction)
+        # labels = [
+        #     "danger_up", "danger_down", "danger_left", "danger_right",
+        #     "obj_up", "obj_down", "obj_left", "obj_right",
+        # ]
+        # print("=" * 20)
+        # print(f" taille labels{len(labels)}")
+        # for label, value in zip(labels, state):
+        #     print(f"{label}: [{value}]")
 
         if result.snake_length < 1 or result.action_state == ActionState.DEAD:
             print(f"Snake dead, max len: {result.snake_length}")

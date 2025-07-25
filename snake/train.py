@@ -97,27 +97,27 @@ def train_with_phases(
             episode_rewards.append(total_reward)
             phase_rewards.append(total_reward)
 
-            if local_ep % 100 == 0 and len(phase_rewards) >= 100:
-                avg_reward_100 = np.mean(phase_rewards[-100:])
-                iterator.set_postfix({
-                    'avg_reward_100': f'{avg_reward_100:.2f}',
-                    'epsilon': f'{agent.epsilon:.4f}',
-                    'q_states': len(agent.q_table) if hasattr(agent, 'q_table') else 0
-                })
+            # if local_ep % 100 == 0 and len(phase_rewards) >= 100:
+            #     avg_reward_100 = np.mean(phase_rewards[-100:])
+            #     iterator.set_postfix({
+            #         'avg_reward_100': f'{avg_reward_100:.2f}',
+            #         'epsilon': f'{agent.epsilon:.4f}',
+            #         'q_states': len(agent.q_table) if hasattr(agent, 'q_table') else 0
+            #     })
 
-        phase_stats[phase.name] = {
-            'avg_reward': np.mean(phase_rewards),
-            'max_reward': np.max(phase_rewards),
-            'min_reward': np.min(phase_rewards),
-            'final_epsilon': agent.epsilon
-        }
+        # phase_stats[phase.name] = {
+        #     'avg_reward': np.mean(phase_rewards),
+        #     'max_reward': np.max(phase_rewards),
+        #     'min_reward': np.min(phase_rewards),
+        #     'final_epsilon': agent.epsilon
+        # }
 
-        print(f"📊 Phase '{phase.name}' terminée:")
-        print(f"   Récompense moyenne: {phase_stats[phase.name]['avg_reward']:.2f}")
-        print(f"   Récompense max: {phase_stats[phase.name]['max_reward']:.2f}")
-        print(f"   Epsilon final: {phase_stats[phase.name]['final_epsilon']:.4f}")
-        print(f"   États Q-table: {len(agent.q_table) if hasattr(agent, 'q_table') else 0}")
-        print()
+        # print(f"📊 Phase '{phase.name}' terminée:")
+        # print(f"   Récompense moyenne: {phase_stats[phase.name]['avg_reward']:.2f}")
+        # print(f"   Récompense max: {phase_stats[phase.name]['max_reward']:.2f}")
+        # print(f"   Epsilon final: {phase_stats[phase.name]['final_epsilon']:.4f}")
+        # print(f"   États Q-table: {len(agent.q_table) if hasattr(agent, 'q_table') else 0}")
+        # print()
 
     if model_path:
         agent.save_model(model_path)

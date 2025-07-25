@@ -30,6 +30,7 @@ class Interpreter:
         self.OBJ_RED = 1
         self.OBJ_BODY = 2
         self.OBJ_WALL = 3
+        self.TAIL = 4
 
     def get_reward(self, result: ActionResult) -> float:
         if result.action_state == ActionState.NOTHING:
@@ -51,6 +52,7 @@ class Interpreter:
     ) -> Tuple[int, ...]:
         head_x, head_y = snake[0]
         body = set(list(snake)[:-1])
+        tail = snake[-1]
         directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
 
         state = []
@@ -69,6 +71,9 @@ class Interpreter:
                 y = head_y + dy * step
                 cell = board[x][y]
 
+                if (x, y) == tail:
+                    obj = self.TAIL
+                    break
                 if (x, y) in body:
                     obj = self.OBJ_BODY
                     break

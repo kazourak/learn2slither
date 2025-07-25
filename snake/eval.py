@@ -67,13 +67,18 @@ def evaluate(agent: QLearningSnakeAgent, env: SnakeEnv, interpreter: Interpreter
     print(f"Min snake length: {min_length}")
     print(f"Max snake length: {max_length}")
     print(f"Median snake length: {median_length}")
-    print(snake_lengths)
+    # print(snake_lengths)
     return min_length, max_length, median_length
 
 
 
 if __name__ == "__main__":
     env = SnakeEnv(10, 3, 1, 2)
-    agent = QLearningSnakeAgent(filename="snake.pkl")
-    interpreter = Interpreter()
+    agent = QLearningSnakeAgent(filename="best_model.pkl")
+    r_nothing = -1.23
+    r_eat_green = 20.58
+    r_eat_red = -28.16
+    r_dead = -113.51
+    interpreter = Interpreter(reward_nothing=r_nothing, reward_dead=r_dead, reward_red_apple=r_eat_red, reward_green_apple=r_eat_green)
+
     evaluate(agent, env, interpreter, episodes=1000, max_step=1000)
