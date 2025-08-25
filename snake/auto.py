@@ -11,19 +11,17 @@ from snake.interpreter import Interpreter
 from snake.train import PhaseConfig, train_with_phases
 
 if __name__ == "__main__":
+    random: bool = True
     env = SnakeEnv(10, 3, 1, 2)
 
     for i in range(500):
-        r_nothing = random.uniform(-3.0, -1)
-        r_eat_green = random.uniform(10, 50)
-        r_eat_red = random.uniform(-50, -10)
-        r_dead = random.uniform(-125, -75)
-        # r_nothing = -1.23
-        # r_eat_green = 20.58
-        # r_eat_red = -28.16
-        # r_dead = -113.51
+        r_nothing = -1.23 if not random else random.uniform(-3.0, -1)
+        r_eat_green = 20.58 if not random else random.uniform(10, 50)
+        r_eat_red = -28.16 if not random else random.uniform(-50, -10)
+        r_dead = -113.51 if not random else random.uniform(-125, -75)
+
+
         interpreter = Interpreter(reward_nothing=r_nothing, reward_dead=r_dead, reward_red_apple=r_eat_red, reward_green_apple=r_eat_green)
-        # interpreter = Interpreter()
 
         agent = QLearningSnakeAgent(
             alpha=0.1,
@@ -95,7 +93,7 @@ if __name__ == "__main__":
 
         result = evaluate(agent, env, interpreter, episodes=5000, max_step=2500)
 
-        new_filename = f"./models/3_{result[2]}_{result[0]}_{result[1]}_snake_optimized_{i}_6_r_{r_nothing}_{r_eat_green}_{r_eat_red}_{r_dead}.pkl"
+        new_filename = f"./models/1_{result[2]}_{result[0]}_{result[1]}_snake_optimized_{i}_6_r_{r_nothing}_{r_eat_green}_{r_eat_red}_{r_dead}.pkl"
         if os.path.exists(model_path):
             shutil.move(model_path, new_filename)
 
