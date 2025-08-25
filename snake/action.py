@@ -29,6 +29,9 @@ class ActionResult:
 def index_to_action_tuple(index: int) -> tuple[int, int]:
     return list(Actions)[index].value
 
+def index_to_string(index: int) -> str:
+    return list(Actions)[index].name
+
 
 def get_coordinates_from_action(action):
     if action == Actions.UP:

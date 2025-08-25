@@ -40,6 +40,8 @@ class TitleState(BaseState):
 
         if selected_option == "Play":
             self.game.change_state("GAME")
+        if selected_option == "Settings":
+            self.game.change_state("SETTINGS")
         if selected_option == "Quit":
             self.game.running = False
 

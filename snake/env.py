@@ -32,6 +32,9 @@ class SnakeEnv:
     ) -> None:
         if map_size < 3:
             raise ValueError("map_size must be at least 3 to allow for walls and play area.")
+
+        if snake_start_length < 2:
+            raise ValueError("snake_start_length must be at least 2.")
         random.seed(seed)
         self.map_size = map_size
         self.snake_start_length = snake_start_length
@@ -69,19 +72,22 @@ class SnakeEnv:
             return ActionResult(ActionState.DEAD, None, len(self.snake), cell)
 
         self.snake.appendleft(new_head)
-        self.board[new_head] = HEAD
         self.board[head_x, head_y] = BODY
 
         if cell == EMPTY or new_head == tail:
             tail = self.snake.pop()
-            self.board[tail] = EMPTY
+            if new_head != tail:
+                self.board[tail] = EMPTY
+            self.board[new_head] = HEAD
 
         elif cell == GREEN_APPLE:
+            self.board[new_head] = HEAD
             self.apples[cell].remove(new_head)
             self._place_apples(cell, 1)
             return ActionResult(ActionState.EAT_GREEN_APPLE, self.board.copy(), len(self.snake))
 
         elif cell == RED_APPLE:
+            self.board[new_head] = HEAD
             self.apples[cell].remove(new_head)
             self._place_apples(cell, 1)
             for _ in range(2):

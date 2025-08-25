@@ -89,22 +89,33 @@ class Interpreter:
                 step += 1
             state.append(obj)
 
-        # for dx, dy in directions:
-        #     step = 1
-        #     while True:
-        #         x = head_x + dx * step
-        #         y = head_y + dy * step
-        #         cell = board[x][y]
-        #
-        #         if (x, y) in body or cell == self.WALL:
-        #             if step <= 3:
-        #                 dist = 0
-        #             elif step <= 6:
-        #                 dist = 1
-        #             else:
-        #                 dist = 2
-        #             break
-        #         step += 1
-        #     state.append(dist)
-
         return tuple(state)
+
+
+    def print_vision(self, board: np.ndarray):
+        head_pos = np.where(board == self.HEAD)
+        if len(head_pos[0]) == 0:
+            return
+
+        head_y, head_x = head_pos[0][0], head_pos[1][0]
+
+        height, width = board.shape
+
+        symbols = {
+            self.EMPTY: '0',
+            self.WALL: 'W',
+            self.HEAD: 'H',
+            self.BODY: 'S',
+            self.GREEN_APPLE: 'G',
+            self.RED_APPLE: 'R'
+        }
+
+        for x in range(height):
+            row = ""
+            for y in range(width):
+                if y == head_y or x == head_x:
+                    cell_value = board[y][x]
+                    row += symbols.get(cell_value, '?') + ' '
+                else:
+                    row += '  '
+            print(row)
