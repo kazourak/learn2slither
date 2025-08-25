@@ -74,11 +74,11 @@ def evaluate(agent: QLearningSnakeAgent, env: SnakeEnv, interpreter: Interpreter
 
 if __name__ == "__main__":
     env = SnakeEnv(10, 3, 1, 2)
-    agent = QLearningSnakeAgent(filename="best_model.pkl")
-    r_nothing = -1.23
-    r_eat_green = 20.58
-    r_eat_red = -28.16
-    r_dead = -113.51
+    agent = QLearningSnakeAgent(filename="model_test.pkl")
+    r_nothing = -1.33
+    r_eat_green = 14.19
+    r_eat_red = -10.04
+    r_dead = -115.19
     interpreter = Interpreter(reward_nothing=r_nothing, reward_dead=r_dead, reward_red_apple=r_eat_red, reward_green_apple=r_eat_green)
 
     evaluate(agent, env, interpreter, episodes=1000, max_step=1000)
