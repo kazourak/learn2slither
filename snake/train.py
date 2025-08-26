@@ -92,7 +92,6 @@ def train_with_phases(
                 step += 1
 
             if agent.is_train:
-                print(agent.epsilon)
                 agent.decay_epsilon()
 
             episode_rewards.append(total_reward)

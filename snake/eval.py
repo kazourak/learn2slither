@@ -1,5 +1,6 @@
 import time
 
+import re
 from snake.action import index_to_action_tuple, ActionResult, ActionState
 from snake.agent import QLearningSnakeAgent
 from snake.env import SnakeEnv
@@ -107,14 +108,32 @@ def evaluate(agent: QLearningSnakeAgent, env: SnakeEnv, interpreter: Interpreter
 
 
 
+
+def extract_rewards_from_filename(filename):
+    """Extrait les valeurs de récompenses depuis le nom du fichier après 'r_'"""
+    pattern = r"r_([-\d.]+)_([-\d.]+)_([-\d.]+)_([-\d.]+?)(?:\.pkl|$)"
+    match = re.search(pattern, filename)
+
+    if match:
+        r_nothing = float(match.group(1).rstrip('.'))
+        r_eat_green = float(match.group(2).rstrip('.'))
+        r_eat_red = float(match.group(3).rstrip('.'))
+        r_dead = float(match.group(4).rstrip('.'))
+        return r_nothing, r_eat_green, r_eat_red, r_dead
+    else:
+        return -1.23, 20.58, -28.16, -113.51
+
 if __name__ == "__main__":
     env = SnakeEnv(10, 3, 1, 2)
-    agent = QLearningSnakeAgent(filename="models/best_best_model_3_46_3_81_r_-1.23_20.58_-28.16_-113.51.pkl")
-    r_nothing = -1.23
-    r_eat_green = 20.58
-    r_eat_red = -28.16
-    r_dead = -113.51
+    filename = "models_t/model_4_47.0_55.0_15.294262484889547_r_-1.21_17.81_-14.23_-115.00.pkl"
+    agent = QLearningSnakeAgent(filename=filename)
+
+    # Extraction automatique des récompenses depuis le nom du fichier
+    r_nothing, r_eat_green, r_eat_red, r_dead = extract_rewards_from_filename(filename)
+
+    print(f"Récompenses extraites: nothing={r_nothing}, green={r_eat_green}, red={r_eat_red}, dead={r_dead}")
+
     interpreter = Interpreter(reward_nothing=r_nothing, reward_dead=r_dead, reward_red_apple=r_eat_red, reward_green_apple=r_eat_green)
 
-    evaluate(agent, env, interpreter, episodes=10000, max_step=1000)
+    evaluate(agent, env, interpreter, episodes=5000, max_step=1000)
     print(f"Total time: {total_time}")

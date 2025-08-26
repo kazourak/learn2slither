@@ -43,13 +43,9 @@ class GameState(BaseState):
         self.board_y = (self.settings["screen_height"] - self.board_size) // 2
 
         self.env = SnakeEnv(self.grid_size, self.settings["snake_length"], self.settings["red_apple_nbr"], self.settings["green_apple_nbr"])
-        r_nothing = -1.23
-        r_eat_green = 20.58
-        r_eat_red = -28.16
-        r_dead = -113.51
-        self.interpreter = Interpreter(reward_nothing=-r_nothing, reward_dead=-r_dead, reward_red_apple=r_eat_red, reward_green_apple=r_eat_green)
+        self.interpreter = Interpreter()
 
-        self.agent = QLearningSnakeAgent(filename="models/best_best_model_3_46_3_81_r_-1.23_20.58_-28.16_-113.51.pkl")
+        self.agent = QLearningSnakeAgent(filename="models_t/model_4_47.0_55.0_15.294262484889547_r_-1.21_17.81_-14.23_-115.00.pkl")
 
         self.snake_speed = self.settings["snake_speed"]
         self._snake_timer = 0.0
