@@ -20,10 +20,10 @@ def train_single_model(args):
     env = SnakeEnv(10, 3, 1, 2)
     
     if use_random:
-        r_nothing = random.uniform(-3.0, -1)
-        r_eat_green = random.uniform(10, 50)
-        r_eat_red = random.uniform(-50, -10)
-        r_dead = random.uniform(-125, -75)
+        r_nothing = random.uniform(-1.5, -1)
+        r_eat_green = random.uniform(15, 20)
+        r_eat_red = random.uniform(-10, -30)
+        r_dead = 115
     else:
         r_nothing = -1.23
         r_eat_green = 20.58
@@ -38,53 +38,51 @@ def train_single_model(args):
     )
 
     agent = QLearningSnakeAgent(
-        alpha=0.1,
+        alpha=0.15,
         gamma=0.95,
-        epsilon=1.0,
-        eps_decay=0.999,
         eps_min=0.001
     )
 
     phases_cfg = [
         PhaseConfig(
-            name="Exploration initiale",
-            episodes=70_000,
+            name="Phase 1: Exploration massive",
+            episodes=100_000,
             eps_start=1.00,
-            eps_end=0.70,
+            eps_end=0.50,
             train=True
         ),
         PhaseConfig(
-            name="Exploration intensive",
-            episodes=120_000,
-            eps_start=0.70,
-            eps_end=0.30,
+            name="Phase 2: Transition exploration",
+            episodes=150_000,
+            eps_start=0.50,
+            eps_end=0.20,
             train=True
         ),
         PhaseConfig(
-            name="Équilibrage Exp/Exp",
-            episodes=95_000,
-            eps_start=0.30,
-            eps_end=0.10,
+            name="Phase 3: Apprentissage intensif",
+            episodes=200_000,
+            eps_start=0.20,
+            eps_end=0.05,
             train=True
         ),
         PhaseConfig(
-            name="Exploitation dominante",
-            episodes=70_000,
-            eps_start=0.10,
-            eps_end=0.02,
+            name="Phase 4: Raffinement stratégique",
+            episodes=150_000,
+            eps_start=0.05,
+            eps_end=0.01,
             train=True
         ),
         PhaseConfig(
-            name="Fine-tuning",
+            name="Phase 5: Optimisation fine",
+            episodes=100_000,
+            eps_start=0.01,
+            eps_end=0.001,
+            train=True
+        ),
+        PhaseConfig(
+            name="Phase 6: Consolidation",
             episodes=50_000,
-            eps_start=0.02,
-            eps_end=0.005,
-            train=True
-        ),
-        PhaseConfig(
-            name="Stabilisation",
-            episodes=40_000,
-            eps_start=0.005,
+            eps_start=0.001,
             eps_end=0.001,
             train=True
         )
@@ -98,11 +96,11 @@ def train_single_model(args):
             env=env,
             interpreter=interpreter,
             phases=phases_cfg,
-            max_steps_per_episode=10000,
+            max_steps_per_episode=5000,
             model_path=temp_model_path,
         )
 
-        result = evaluate(agent, env, interpreter, episodes=5000, max_step=2500)
+        result = evaluate(agent, env, interpreter, episodes=5000, max_step=5000)
         
         final_filename = f"{base_path}/model_{model_id}_{result[2]}_{result[0]}_{result[1]}_r_{r_nothing:.2f}_{r_eat_green:.2f}_{r_eat_red:.2f}_{r_dead:.2f}.pkl"
         
@@ -134,15 +132,14 @@ def main():
     
     use_random = input("Utiliser des valeurs aléatoires pour les récompenses ? (o/n) ").lower().startswith('o')
     
-    models_dir = "./models"
+    models_dir = "./best_model"
     if not os.path.exists(models_dir):
         os.makedirs(models_dir)
     
     print(f"\nLancement de {num_models} entraînements avec {max_workers} processus simultanés...")
     print(f"Mode: {'Aléatoire' if use_random else 'Fixe'}")
     print("-" * 50)
-    
-    start_time = time.time()
+
     completed = 0
     
     args_list = [(i, use_random, models_dir) for i in range(num_models)]
@@ -163,13 +160,6 @@ def main():
                     
             except Exception as e:
                 completed += 1
-                print(f"✗ Modèle {model_id} échoué ({completed}/{num_models}) - Exception: {str(e)}")
-    
-    elapsed_time = time.time() - start_time
-    print(f"\n{'='*50}")
-    print(f"Entraînement terminé en {elapsed_time:.1f} secondes")
-    print(f"Modèles sauvegardés dans: {models_dir}/")
-
 
 if __name__ == "__main__":
     main()

@@ -1,3 +1,5 @@
+import time
+
 from snake.action import index_to_action_tuple, ActionResult, ActionState
 from snake.agent import QLearningSnakeAgent
 from snake.env import SnakeEnv
@@ -8,8 +10,15 @@ from tqdm import tqdm  # Added tqdm for progress indication
 WALL = 1
 BODY = 3
 
+total_time = 0
+
+
+import statistics
+import numpy as np
+from tqdm import tqdm
 
 def evaluate(agent: QLearningSnakeAgent, env: SnakeEnv, interpreter: Interpreter, episodes=10000, max_step=10000):
+    global total_time
     eat_green_apple = 0
     eat_red_apple = 0
     dead_by_wall = 0
@@ -54,9 +63,20 @@ def evaluate(agent: QLearningSnakeAgent, env: SnakeEnv, interpreter: Interpreter
                 break
             step += 1
 
-    min_length = min(snake_lengths) if snake_lengths else 0
-    max_length = max(snake_lengths) if snake_lengths else 0
-    median_length = statistics.median(snake_lengths) if snake_lengths else 0
+    # Calcul des statistiques
+    if snake_lengths:
+        min_length = min(snake_lengths)
+        max_length = max(snake_lengths)
+        mean_length = statistics.mean(snake_lengths)
+        median_length = statistics.median(snake_lengths)
+        std_length = statistics.stdev(snake_lengths) if len(snake_lengths) > 1 else 0
+
+        # Calcul des quartiles
+        q1_length = np.percentile(snake_lengths, 25)
+        q3_length = np.percentile(snake_lengths, 75)
+    else:
+        min_length = max_length = mean_length = median_length = std_length = 0
+        q1_length = q3_length = 0
 
     print(f"Eat green apple: {eat_green_apple}")
     print(f"Eat red apple: {eat_red_apple}")
@@ -64,21 +84,37 @@ def evaluate(agent: QLearningSnakeAgent, env: SnakeEnv, interpreter: Interpreter
     print(f"Dead by body: {dead_by_body}")
     print(f"Dead by size: {dead_by_size}")
     print(f"Stopped: {stopped}")
+    print(f"\n=== STATISTIQUES DES LONGUEURS ===")
     print(f"Min snake length: {min_length}")
     print(f"Max snake length: {max_length}")
+    print(f"Mean snake length: {mean_length:.2f}")
     print(f"Median snake length: {median_length}")
-    # print(snake_lengths)
-    return min_length, max_length, median_length
+    print(f"Q1 (25th percentile): {q1_length}")
+    print(f"Q3 (75th percentile): {q3_length}")
+    print(f"Standard deviation: {std_length:.2f}")
+    print(f"Total completed games: {len(snake_lengths)}")
+
+    return {
+        'min_length': min_length,
+        'max_length': max_length,
+        'mean_length': mean_length,
+        'median_length': median_length,
+        'q1_length': q1_length,
+        'q3_length': q3_length,
+        'std_length': std_length,
+        'total_games': len(snake_lengths)
+    }
 
 
 
 if __name__ == "__main__":
     env = SnakeEnv(10, 3, 1, 2)
-    agent = QLearningSnakeAgent(filename="model_test.pkl")
-    r_nothing = -1.33
-    r_eat_green = 14.19
-    r_eat_red = -10.04
-    r_dead = -115.19
+    agent = QLearningSnakeAgent(filename="models/best_best_model_3_46_3_81_r_-1.23_20.58_-28.16_-113.51.pkl")
+    r_nothing = -1.23
+    r_eat_green = 20.58
+    r_eat_red = -28.16
+    r_dead = -113.51
     interpreter = Interpreter(reward_nothing=r_nothing, reward_dead=r_dead, reward_red_apple=r_eat_red, reward_green_apple=r_eat_green)
 
-    evaluate(agent, env, interpreter, episodes=1000, max_step=1000)
+    evaluate(agent, env, interpreter, episodes=10000, max_step=1000)
+    print(f"Total time: {total_time}")

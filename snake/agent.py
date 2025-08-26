@@ -21,7 +21,7 @@ class QLearningSnakeAgent:
         # Statistiques d'entraînement
         self.training_stats = {
             'episodes': 0,
-            'total_reward': 0,
+            'recent_rewards': [],
             'epsilon_history': []
         }
 
@@ -34,11 +34,13 @@ class QLearningSnakeAgent:
             return random.randrange(len(ACTIONS))
 
         q_values = self.q_table[state]
-        return np.argmax(q_values)
+        # Tie-breaking
+        max_q = np.max(q_values)
+        max_actions = np.where(q_values == max_q)[0]
+        return np.random.choice(max_actions)
 
     def update(self, state, action, reward, next_state, done):
         """
-        Met à jour la Q-table selon la formule de Bellman
         Q(s,a) += alpha * [r + gamma * max_a' Q(s',a') - Q(s,a)]
         """
         current = self.q_table[state][action]
@@ -50,21 +52,20 @@ class QLearningSnakeAgent:
 
         self.q_table[state][action] = current + self.alpha * (target - current)
 
-        # Mise à jour des stats
-        if self.is_train:
-            self.training_stats['total_reward'] += reward
-
     def decay_epsilon(self):
         """Décroissance d'epsilon avec minimum"""
         self.epsilon = max(self.eps_min, self.epsilon * self.eps_decay)
         if self.is_train:
             self.training_stats['epsilon_history'].append(self.epsilon)
 
-    def end_episode(self):
+    def end_episode(self, episode_reward=0):
         """À appeler à la fin de chaque épisode"""
         if self.is_train:
             self.training_stats['episodes'] += 1
-            self.decay_epsilon()
+            # Garder seulement les 1000 dernières récompenses
+            self.training_stats['recent_rewards'].append(episode_reward)
+            if len(self.training_stats['recent_rewards']) > 1000:
+                self.training_stats['recent_rewards'].pop(0)
 
     def set_training_mode(self, is_training=True):
         """Active/désactive le mode entraînement"""
@@ -126,6 +127,6 @@ class QLearningSnakeAgent:
         print(f"Épisodes: {stats['episodes']}")
         print(f"Epsilon actuel: {self.epsilon:.4f}")
         print(f"Taille Q-table: {self.get_q_table_size()}")
-        if stats['episodes'] > 0:
-            avg_reward = stats['total_reward'] / stats['episodes']
-            print(f"Récompense moyenne: {avg_reward:.2f}")
+        if stats['recent_rewards']:
+            avg_reward = np.mean(stats['recent_rewards'])
+            print(f"Récompense moyenne (récente): {avg_reward:.2f}")

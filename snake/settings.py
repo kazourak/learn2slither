@@ -10,7 +10,8 @@ SNAKE_SPEED = 30
 MAP_SIZE = 10
 GREEN_APPLE_NBR = 2
 RED_APPLE_NBR = 1
-SNAKE_LENGTH = 2
+# TO DELETE
+SNAKE_LENGTH = 3
 
 settings_value = {
     "screen_width"  : SCREEN_WIDTH,

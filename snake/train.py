@@ -92,32 +92,11 @@ def train_with_phases(
                 step += 1
 
             if agent.is_train:
+                print(agent.epsilon)
                 agent.decay_epsilon()
 
             episode_rewards.append(total_reward)
             phase_rewards.append(total_reward)
-
-            # if local_ep % 100 == 0 and len(phase_rewards) >= 100:
-            #     avg_reward_100 = np.mean(phase_rewards[-100:])
-            #     iterator.set_postfix({
-            #         'avg_reward_100': f'{avg_reward_100:.2f}',
-            #         'epsilon': f'{agent.epsilon:.4f}',
-            #         'q_states': len(agent.q_table) if hasattr(agent, 'q_table') else 0
-            #     })
-
-        # phase_stats[phase.name] = {
-        #     'avg_reward': np.mean(phase_rewards),
-        #     'max_reward': np.max(phase_rewards),
-        #     'min_reward': np.min(phase_rewards),
-        #     'final_epsilon': agent.epsilon
-        # }
-
-        # print(f"📊 Phase '{phase.name}' terminée:")
-        # print(f"   Récompense moyenne: {phase_stats[phase.name]['avg_reward']:.2f}")
-        # print(f"   Récompense max: {phase_stats[phase.name]['max_reward']:.2f}")
-        # print(f"   Epsilon final: {phase_stats[phase.name]['final_epsilon']:.4f}")
-        # print(f"   États Q-table: {len(agent.q_table) if hasattr(agent, 'q_table') else 0}")
-        # print()
 
     if model_path:
         agent.save_model(model_path)
@@ -132,67 +111,51 @@ if __name__ == "__main__":
     agent = QLearningSnakeAgent(
         alpha=0.1,           # Learning rate
         gamma=0.95,          # Discount factor (plus élevé pour Snake)
-        epsilon=1.0,         # Sera géré par les phases
-        eps_decay=0.999,     # Sera calculé automatiquement
-        eps_min=0.001        # Minimum epsilon
     )
 
     phases_cfg = [
         PhaseConfig(
             name="Exploration initiale",
-            episodes=15_000,
+            episodes=70_000,
             eps_start=1.00,
             eps_end=0.70,
             train=True
         ),
-
         PhaseConfig(
             name="Exploration intensive",
-            episodes=50_000,
+            episodes=120_000,
             eps_start=0.70,
             eps_end=0.30,
             train=True
         ),
-
         PhaseConfig(
             name="Équilibrage Exp/Exp",
-            episodes=75_000,
+            episodes=95_000,
             eps_start=0.30,
             eps_end=0.10,
             train=True
         ),
-
         PhaseConfig(
             name="Exploitation dominante",
-            episodes=40_000,
+            episodes=70_000,
             eps_start=0.10,
             eps_end=0.02,
             train=True
         ),
-
         PhaseConfig(
             name="Fine-tuning",
-            episodes=20_000,
+            episodes=50_000,
             eps_start=0.02,
             eps_end=0.005,
             train=True
         ),
-
         PhaseConfig(
             name="Stabilisation",
-            episodes=10_000,
+            episodes=40_000,
             eps_start=0.005,
             eps_end=0.001,
             train=True
-        ),
-
-        # PhaseConfig(
-        #     name="finale",
-        #     episodes=5_000,
-        #     eps_start=0.0,
-        #     eps_end=0.0,
-        #     train=False
-        # ),
+        )
     ]
 
     print("🐍 Démarrage de l'entraînement Snake Q-Learning")
@@ -206,7 +169,7 @@ if __name__ == "__main__":
         interpreter=interpreter,
         phases=phases_cfg,
         max_steps_per_episode=10000,
-        model_path="snake.pkl",
+        model_path="snake_2.pkl",
     )
 
     print("🎉 Entraînement terminé!")

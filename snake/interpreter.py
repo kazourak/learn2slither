@@ -9,10 +9,10 @@ from snake.env import Coordinate
 class Interpreter:
     def __init__(
             self,
-            reward_nothing: float = -2.5,
-            reward_green_apple: float = 25.0,
-            reward_red_apple: float = -30.0,
-            reward_dead: float = -100.0,
+            reward_nothing: float = -1.23,
+            reward_green_apple: float = 20.58,
+            reward_red_apple: float = -28.16,
+            reward_dead: float = -113.51,
     ):
         self.reward_nothing = reward_nothing
         self.reward_green_apple = reward_green_apple
