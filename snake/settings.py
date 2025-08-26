@@ -10,8 +10,6 @@ SNAKE_SPEED = 30
 MAP_SIZE = 10
 GREEN_APPLE_NBR = 2
 RED_APPLE_NBR = 1
-# TO DELETE
-SNAKE_LENGTH = 3
 
 settings_value = {
     "screen_width"  : SCREEN_WIDTH,
@@ -21,7 +19,6 @@ settings_value = {
     "font_dir"      : FONT_DIR,
     "sound_dir"     : SOUND_DIR,
     "snake_speed"   : SNAKE_SPEED,
-    "snake_length"  : SNAKE_LENGTH,
     "map_size"      : MAP_SIZE,
     "green_apple_nbr" : GREEN_APPLE_NBR,
     "red_apple_nbr" : RED_APPLE_NBR

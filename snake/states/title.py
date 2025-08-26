@@ -14,7 +14,7 @@ class TitleState(BaseState):
     def __init__(self, game):
         super().__init__(game)
         self.font = self.game.loader.load_font("8bitoperator_jve.ttf")
-        self.menu_buttons = ["Play", "Play with AI", "Settings", "Quit"]
+        self.menu_buttons = ["Play", "Train", "Settings", "Quit"]
         self.selected_index = 0
         self.button_height = 60
         self.button_width = 300

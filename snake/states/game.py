@@ -42,7 +42,7 @@ class GameState(BaseState):
         self.board_x = (self.settings["screen_width"] - self.board_size) // 2
         self.board_y = (self.settings["screen_height"] - self.board_size) // 2
 
-        self.env = SnakeEnv(self.grid_size, self.settings["snake_length"], self.settings["red_apple_nbr"], self.settings["green_apple_nbr"])
+        self.env = SnakeEnv(self.grid_size, 3, self.settings["red_apple_nbr"], self.settings["green_apple_nbr"])
         self.interpreter = Interpreter()
 
         self.agent = QLearningSnakeAgent(filename="models_t/model_4_47.0_55.0_15.294262484889547_r_-1.21_17.81_-14.23_-115.00.pkl")

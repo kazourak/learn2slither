@@ -1,6 +1,5 @@
 import pygame
 from snake import settings
-from snake.settings import settings_value
 from snake.states import *
 from snake.states.settings import SettingsState
 from snake.utils.loader import AssetLoader
