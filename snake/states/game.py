@@ -273,7 +273,6 @@ class GameState(BaseState):
             self._end_game = False
             self.agent.decay_epsilon()
             self._nb_sessions += 1
-            print("O" * 1000)
             return
 
         self._bg_timer += dt
@@ -330,7 +329,7 @@ class GameState(BaseState):
         self.env.direction = index_to_action_tuple(action_idx)
         result: ActionResult = self.env.step()
         print(index_to_string(action_idx))
-        # self.interpreter.print_vision(self.env.board)
+        self.interpreter.print_vision(self.env.board)
 
         if result.snake_length < 1 or result.action_state == ActionState.DEAD:
             self._nb_sessions += 1
