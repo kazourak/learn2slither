@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import random
-import shutil
 import multiprocessing as mp
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -10,6 +9,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from snake.agent import QLearningSnakeAgent
 from snake.env import SnakeEnv
 from snake.eval import evaluate
+from snake.phases import intensive_cfg
 from snake.interpreter import Interpreter
 from snake.train import PhaseConfig, train_with_phases
 
@@ -22,7 +22,7 @@ def train_single_model(args):
     if use_random:
         r_nothing = random.uniform(-1.5, -1)
         r_eat_green = random.uniform(15, 20)
-        r_eat_red = random.uniform(-30, -10)
+        r_eat_red = random.uniform(-15, -10)
         r_dead = -115
     else:
         r_nothing = -1.23
@@ -37,88 +37,29 @@ def train_single_model(args):
         reward_green_apple=r_eat_green
     )
 
-    agent = QLearningSnakeAgent(
-        alpha=0.15,
-        gamma=0.95,
-        epsilon=1.0,
-        eps_decay=0.999,
-        eps_min=0.001
-    )
 
-    phases_cfg = [
-        PhaseConfig(
-            name="Phase 1: Exploration massive",
-            episodes=100_000,
-            eps_start=1.00,
-            eps_end=0.50,
-            train=True
-        ),
-        PhaseConfig(
-            name="Phase 2: Transition exploration",
-            episodes=150_000,
-            eps_start=0.50,
-            eps_end=0.20,
-            train=True
-        ),
-        PhaseConfig(
-            name="Phase 3: Apprentissage intensif",
-            episodes=200_000,
-            eps_start=0.20,
-            eps_end=0.05,
-            train=True
-        ),
-        PhaseConfig(
-            name="Phase 4: Raffinement stratégique",
-            episodes=150_000,
-            eps_start=0.05,
-            eps_end=0.01,
-            train=True
-        ),
-        PhaseConfig(
-            name="Phase 5: Optimisation fine",
-            episodes=100_000,
-            eps_start=0.01,
-            eps_end=0.001,
-            train=True
-        ),
-        PhaseConfig(
-            name="Phase 6: Consolidation",
-            episodes=50_000,
-            eps_start=0.001,
-            eps_end=0.001,
-            train=True
-        )
-    ]
-
-    temp_model_path = f"{base_path}/temp_model_{model_id}_{os.getpid()}.pkl"
+    model_path = f"{base_path}/temp_model_{model_id}_{os.getpid()}.pkl"
+    agent = QLearningSnakeAgent(save_path=model_path, train=True)
 
     try:
         _, _ = train_with_phases(
             agent=agent,
             env=env,
             interpreter=interpreter,
-            phases=phases_cfg,
-            max_steps_per_episode=10000,
-            model_path=temp_model_path,
+            phases=intensive_cfg,
+            max_steps_per_episode=2500
         )
 
         result = evaluate(agent, env, interpreter, episodes=5000, max_step=2500)
-
-        final_filename = f"{base_path}/model_{model_id}_{result['median_length']}_{result['q3_length']}_{result['std_length']}_r_{r_nothing:.2f}_{r_eat_green:.2f}_{r_eat_red:.2f}_{r_dead:.2f}.pkl"
-
-        if os.path.exists(temp_model_path):
-            shutil.move(temp_model_path, final_filename)
 
         return {
             'model_id': model_id,
             'success': True,
             'result': result,
             'rewards': (r_nothing, r_eat_green, r_eat_red, r_dead),
-            'filename': final_filename
+            'filename': model_path
         }
     except Exception as e:
-        if os.path.exists(temp_model_path):
-            os.remove(temp_model_path)
         return {
             'model_id': model_id,
             'success': False,
@@ -134,7 +75,7 @@ def main():
 
     use_random = input("Utiliser des valeurs aléatoires pour les récompenses ? (o/n) ").lower().startswith('o')
 
-    models_dir = "./models_t"
+    models_dir = "./models_test2"
     if not os.path.exists(models_dir):
         os.makedirs(models_dir)
 

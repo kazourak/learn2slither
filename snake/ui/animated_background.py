@@ -1,6 +1,7 @@
 import pygame
-from snake.settings import SCREEN_WIDTH, SCREEN_HEIGHT
 
+SCREEN_WIDTH = 1080
+SCREEN_HEIGHT = 720
 
 class AnimatedGridBackground:
     def __init__(self,

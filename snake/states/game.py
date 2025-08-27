@@ -1,4 +1,3 @@
-import time
 from typing import Tuple, Deque, Set
 
 import pygame
@@ -34,25 +33,29 @@ class GameState(BaseState):
         self.animated_background = AnimatedGridBackground()
 
         self.grid_size = self.settings["map_size"]
-        self.board_size = min(self.settings["screen_width"], self.settings["screen_height"]) * 0.8
+        self.board_size = min(1080, 720) * 0.8
         self.cell_size = self.board_size // self.grid_size
         self.board_size = self.cell_size * self.grid_size
         self.board_surface = self._build_board_surface()
 
-        self.board_x = (self.settings["screen_width"] - self.board_size) // 2
-        self.board_y = (self.settings["screen_height"] - self.board_size) // 2
+        self.board_x = (1080 - self.board_size) // 2
+        self.board_y = (720 - self.board_size) // 2
 
         self.env = SnakeEnv(self.grid_size, 3, self.settings["red_apple_nbr"], self.settings["green_apple_nbr"])
-        self.interpreter = Interpreter()
+        self.interpreter = Interpreter(reward_nothing=-1.14, reward_dead=-115, reward_green_apple=19.14, reward_red_apple=-21.96)
 
-        self.agent = QLearningSnakeAgent(filename="models_t/model_4_47.0_55.0_15.294262484889547_r_-1.21_17.81_-14.23_-115.00.pkl")
+        self.agent = QLearningSnakeAgent(save_path=self.settings["save_path"], load_path=self.settings["load_path"], train=self.settings["train"], epsilon=0.02, eps_min=0.005)
+        self.agent.calc_eps_decay(self.settings["sessions"])
+        self.current_state = None
 
-        self.snake_speed = self.settings["snake_speed"]
+        self.snake_speed = 60
         self._snake_timer = 0.0
         self._bg_timer = 0.0
         self._paused = False
         self._step_by_step = False
         self._end_game = False
+        self._nb_sessions = 0
+        self._nb_steps = 0
 
         def scale(img):
             return pygame.transform.scale(img, (self.cell_size, self.cell_size))
@@ -98,12 +101,11 @@ class GameState(BaseState):
         self.cell_size = self.board_size // self.grid_size
         self.board_size = self.cell_size * self.grid_size
 
-        self.board_x = (self.settings["screen_width"] - self.board_size) // 2
-        self.board_y = (self.settings["screen_height"] - self.board_size) // 2
+        self.board_x = (1080 - self.board_size) // 2
+        self.board_y = (720 - self.board_size) // 2
 
     def draw_board(self, surface):
         surface.blit(self.board_surface, (self.board_x, self.board_y))
-
 
     def draw_snake(self, surface, snake: Deque[Coordinate], head_dir: Coordinate):
         for i, (col, row) in enumerate(snake):
@@ -143,7 +145,6 @@ class GameState(BaseState):
 
         return self.snake_angle_body_sprites.get((din, dout), pygame.Surface((self.cell_size, self.cell_size)))
 
-
     def draw_apples(self, surface, apple_type, apple: Set[Coordinate]):
         sprite = self.apple_sprites[apple_type]
 
@@ -159,10 +160,16 @@ class GameState(BaseState):
         score_rect = score_surface.get_rect(topleft=(10, 10))
         surface.blit(score_surface, score_rect)
 
+    def draw_session_info(self, surface):
+        session_text = f"Session: {self._nb_sessions}" + (f"/{self.settings['sessions']}" if self.settings['sessions'] > 0 else "")
+        session_surface = self.font.render(session_text, True, WHITE)
+        session_rect = session_surface.get_rect(topleft=(10, 30))
+        surface.blit(session_surface, session_rect)
+
     def draw_end_screen(self, surface):
         score_text = f"Snake length: {len(self.env.snake)}"
         score_surface = self.font.render(score_text, True, WHITE)
-        score_rect = score_surface.get_rect(center=(self.settings["screen_width"] // 2, self.settings["screen_height"] // 2))
+        score_rect = score_surface.get_rect(center=(1080 // 2, 720 // 2))
         surface.blit(score_surface, score_rect)
 
     def draw_state(self, surface):
@@ -171,8 +178,8 @@ class GameState(BaseState):
         danger_up, danger_down, danger_left, danger_right, obj_up, obj_down, obj_left, obj_right = state
 
         state_size = 30
-        state_x = self.settings["screen_width"] - state_size * 3
-        state_y = self.settings["screen_height"] - state_size * 3
+        state_x = 1080 - state_size * 3
+        state_y = 720 - state_size * 3
 
         directions = [
             (1, 0, "right"),
@@ -222,8 +229,9 @@ class GameState(BaseState):
         self._snake_timer = 0.0
         self._bg_timer = 0.0
         self._paused = False
-        self._step_by_step = False
+        # self._step_by_step = False
         self._end_game = False
+        self.current_state = self.interpreter.get_state(self.env.snake, self.env.board, self.env.direction)
 
 
     def _build_board_surface(self):
@@ -244,7 +252,6 @@ class GameState(BaseState):
 
         return surf
 
-
     def handle_events(self, event):
         if event.type == pygame.KEYDOWN:
             if self._end_game:
@@ -259,8 +266,16 @@ class GameState(BaseState):
                     self._paused = False
                 return
 
-
     def update(self, dt):
+        if self._nb_steps >= 500:
+            self._nb_steps = 0
+            self.env.reset()
+            self._end_game = False
+            self.agent.decay_epsilon()
+            self._nb_sessions += 1
+            print("O" * 1000)
+            return
+
         self._bg_timer += dt
         self._snake_timer += dt
 
@@ -270,12 +285,41 @@ class GameState(BaseState):
             self._bg_timer -= bg_interval
             self.animated_background.update(dt)
 
-        snake_interval = 1.0 / self.snake_speed
+        if self.settings["train"]:
+            if self._step_by_step and self._paused:
+                return
 
-        if self._snake_timer >= snake_interval:
-            self._snake_timer -=  snake_interval
-            self._update_snake()
+            action_idx = self.agent.choose_action(self.current_state)
+            print(index_to_string(action_idx))
+            self.env.direction = index_to_action_tuple(action_idx)
+            result: ActionResult = self.env.step()
+            next_state = self.interpreter.get_state(self.env.snake, self.env.board, self.env.direction)
+            reward = self.interpreter.get_reward(result, self.current_state, next_state)
+            print(reward)
 
+            if result.snake_length < 1 or result.action_state == ActionState.DEAD:
+                self._end_game = True
+
+            self.agent.update(self.current_state, action_idx, reward, next_state, self._end_game)
+            self.current_state = next_state
+
+            if self._step_by_step and not self._paused:
+                self._paused = True
+
+            if self._end_game:
+                self.env.reset()
+                self._end_game = False
+                self.agent.decay_epsilon()
+                self._nb_sessions += 1
+                return
+
+            self._nb_steps += 1
+        else:
+            snake_interval = 1.0 / self.snake_speed
+
+            if self._snake_timer >= snake_interval:
+                self._snake_timer -=  snake_interval
+                self._update_snake()
 
     def _update_snake(self):
         if (self._step_by_step and self._paused) or self._end_game:
@@ -286,9 +330,10 @@ class GameState(BaseState):
         self.env.direction = index_to_action_tuple(action_idx)
         result: ActionResult = self.env.step()
         print(index_to_string(action_idx))
-        self.interpreter.print_vision(self.env.board)
+        # self.interpreter.print_vision(self.env.board)
 
         if result.snake_length < 1 or result.action_state == ActionState.DEAD:
+            self._nb_sessions += 1
             self._end_game = True
 
         if self._step_by_step and not self._paused:
@@ -296,16 +341,18 @@ class GameState(BaseState):
 
     def draw(self, surface):
         self.animated_background.draw(surface)
-        if self._end_game:
+        if self._end_game and not self.settings["train"]:
             self.draw_end_screen(surface)
             return
 
         self.draw_board(surface)
         self.draw_score(surface)
+        self.draw_session_info(surface)
 
         self.draw_apples(surface, "RED_APPLE", self.env.apples[5])
         self.draw_apples(surface, "GREEN_APPLE", self.env.apples[4])
         self.draw_snake(surface, self.env.snake, self.env.direction)
+
         if self._step_by_step:
             self.draw_state(surface)
 

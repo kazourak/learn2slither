@@ -32,8 +32,11 @@ class Interpreter:
         self.OBJ_WALL = 3
         self.TAIL = 4
 
-    def get_reward(self, result: ActionResult) -> float:
+
+    def get_reward(self, result: ActionResult, old_state, new_state) -> float:
         if result.action_state == ActionState.NOTHING:
+            if old_state and snake_go_to_green_apple(old_state, new_state):
+                return -self.reward_nothing
             return self.reward_nothing
         elif result.action_state == ActionState.EAT_GREEN_APPLE:
             return self.reward_green_apple
@@ -53,7 +56,7 @@ class Interpreter:
         head_x, head_y = snake[0]
         body = set(list(snake)[:-1])
         tail = snake[-1]
-        directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+        directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]# 0, 0, 0, 0, 0, 3, 3, 3 et # 0, 0, 0, 0, 0, 3, 3, 1
 
         state = []
 
@@ -119,3 +122,16 @@ class Interpreter:
                 else:
                     row += '  '
             print(row)
+
+
+def snake_go_to_green_apple(state: tuple, new_state: tuple) -> bool:
+    last_state = state[-4:]
+    last_new_state = new_state[-4:]
+
+    if 0 not in last_state or 0 not in last_new_state:
+        return False
+
+    for i in range(4):
+        if last_state[i] == last_new_state[i] == 0:
+            return True
+    return False

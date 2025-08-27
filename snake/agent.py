@@ -6,30 +6,34 @@ from collections import defaultdict
 ACTIONS = ['UP', 'DOWN', 'LEFT', 'RIGHT']
 
 class QLearningSnakeAgent:
-    def __init__(self, alpha=0.1, gamma=0.9, epsilon=1.0, eps_decay=0.9995,
-                 eps_min=0.01, filename=None):
+    def __init__(self, alpha=0.15, gamma=0.95, epsilon=1.0, eps_decay=0.999,
+                 eps_min=0, load_path=None, save_path=None, train=False):
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
         self.eps_decay = eps_decay
         self.eps_min = eps_min
-        self.is_train = True
 
-        # Utilisation de numpy pour les valeurs par défaut
+        self.is_train = train
+        self.save_path = save_path
+
         self.q_table = defaultdict(lambda: np.zeros(len(ACTIONS)))
 
-        # Statistiques d'entraînement
         self.training_stats = {
             'episodes': 0,
             'recent_rewards': [],
             'epsilon_history': []
         }
 
-        if filename:
-            self.load_model(filename)
+        if load_path:
+            self.load_model(load_path)
+
+    def calc_eps_decay(self, episodes: int):
+        if self.epsilon == 0 or episodes <= 1:
+            self.eps_decay = 1.0
+        self.eps_decay = (self.eps_min / self.epsilon) ** (1 / episodes)
 
     def choose_action(self, state: tuple):
-        """Choisit une action selon la politique epsilon-greedy"""
         if self.is_train and random.random() < self.epsilon:
             return random.randrange(len(ACTIONS))
 
@@ -53,76 +57,49 @@ class QLearningSnakeAgent:
         self.q_table[state][action] = current + self.alpha * (target - current)
 
     def decay_epsilon(self):
-        """Décroissance d'epsilon avec minimum"""
         self.epsilon = max(self.eps_min, self.epsilon * self.eps_decay)
         if self.is_train:
             self.training_stats['epsilon_history'].append(self.epsilon)
 
     def end_episode(self, episode_reward=0):
-        """À appeler à la fin de chaque épisode"""
         if self.is_train:
             self.training_stats['episodes'] += 1
-            # Garder seulement les 1000 dernières récompenses
+
             self.training_stats['recent_rewards'].append(episode_reward)
             if len(self.training_stats['recent_rewards']) > 1000:
                 self.training_stats['recent_rewards'].pop(0)
 
-    def set_training_mode(self, is_training=True):
-        """Active/désactive le mode entraînement"""
-        self.is_train = is_training
-
     def get_stats(self):
-        """Retourne les statistiques d'entraînement"""
         return self.training_stats.copy()
 
     def get_q_table_size(self):
-        """Retourne la taille de la Q-table"""
         return len(self.q_table)
 
-    def save_model(self, path):
-        """Sauvegarde le modèle et les statistiques"""
-        data = {
-            'q_table': dict(self.q_table),
-            'training_stats': self.training_stats,
-            'hyperparams': {
-                'alpha': self.alpha,
-                'gamma': self.gamma,
-                'epsilon': self.epsilon,
-                'eps_decay': self.eps_decay,
-                'eps_min': self.eps_min
-            }
-        }
-        with open(path, 'wb') as f:
+    def save_model(self):
+        # print(self.q_table)
+        if self.save_path is None:
+            return
+
+        data = {'q_table': dict(self.q_table)}
+
+        with open(self.save_path, 'wb') as f:
             pickle.dump(data, f)
 
     def load_model(self, path):
-        """Charge un modèle sauvegardé"""
         try:
             with open(path, 'rb') as f:
                 data = pickle.load(f)
 
-            # Charger la Q-table
-            if isinstance(data, dict) and 'q_table' in data:
-                # Nouveau format avec métadonnées
                 self.q_table = defaultdict(lambda: np.zeros(len(ACTIONS)),
                                            data['q_table'])
-                if 'training_stats' in data:
-                    self.training_stats = data['training_stats']
-                if 'hyperparams' in data:
-                    hp = data['hyperparams']
-                    self.epsilon = hp.get('epsilon', self.epsilon)
-            else:
-                # Ancien format (seulement la Q-table)
-                self.q_table = defaultdict(lambda: np.zeros(len(ACTIONS)), data)
+                # print(self.q_table)
 
         except Exception as e:
             print(f"Erreur lors du chargement du modèle : {e}")
-            # Réinitialiser avec des valeurs par défaut
             self.q_table = defaultdict(lambda: np.zeros(len(ACTIONS)))
 
 
     def print_training_info(self):
-        """Affiche des informations sur l'entraînement"""
         stats = self.training_stats
         print(f"Épisodes: {stats['episodes']}")
         print(f"Epsilon actuel: {self.epsilon:.4f}")
