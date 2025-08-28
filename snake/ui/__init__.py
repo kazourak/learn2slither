@@ -1,1 +1,0 @@
-from .animated_background import AnimatedGridBackground
