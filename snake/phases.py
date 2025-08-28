@@ -8,7 +8,27 @@ class PhaseConfig:
     eps_start: float = 0.0
     eps_end: float = 0.0
 
-optimal_phases_cfg = [
+basic_cfg = [
+    PhaseConfig(
+        name="Exploration",
+        episodes=100_000,
+        eps_start=1.00,
+        eps_end=0.01,
+    ),
+    PhaseConfig(
+        name="Learning",
+        episodes=100_000,
+        eps_start=0.01,
+        eps_end=0.001,
+    ),
+    PhaseConfig(
+        name="Exploitation",
+        episodes=100_000,
+        eps_start=0.001,
+    )
+]
+
+optimal_cfg = [
     PhaseConfig(
         name="Exploration initiale",
         episodes=70_000,
@@ -96,7 +116,7 @@ one_episode_cfg = [
 ]
 
 def get_standard_phases_cfg(episodes: int):
-    if episodes <= 1:
+    if episodes is None or episodes <= 1:
         return one_episode_cfg
 
     exploration_episodes = int(episodes * 0.35)  # 35%

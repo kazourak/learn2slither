@@ -44,17 +44,18 @@ class GameState(BaseState):
         self.env = SnakeEnv(self.grid_size, 3, self.settings["red_apple_nbr"], self.settings["green_apple_nbr"])
         self.interpreter = Interpreter(reward_nothing=-1.14, reward_dead=-115, reward_green_apple=19.14, reward_red_apple=-21.96)
 
-        self.agent = QLearningSnakeAgent(save_path=self.settings["save_path"], load_path=self.settings["load_path"], train=self.settings["train"], epsilon=0.02, eps_min=0.005)
+        self.agent = QLearningSnakeAgent(save_path=self.settings["save_path"], load_path=self.settings["load_path"], train=self.settings["train"])
         self.agent.calc_eps_decay(self.settings["sessions"])
-        self.current_state = None
+        self.current_state = self.interpreter.get_state(self.env.snake, self.env.board)
 
-        self.snake_speed = 60
+        self.nb_sessions = 1
+        self.snake_speed = 15
+
         self._snake_timer = 0.0
         self._bg_timer = 0.0
-        self._paused = False
-        self._step_by_step = False
+        self._paused = settings["step"]
+        self._step_by_step = settings["step"]
         self._end_game = False
-        self._nb_sessions = 0
         self._nb_steps = 0
 
         def scale(img):
@@ -132,7 +133,6 @@ class GameState(BaseState):
 
             surface.blit(sprite, (x, y))
 
-
     def get_body_sprite(self, head: Coordinate, body: Coordinate, tail: Coordinate):
         din  = (head[0] - body[0], head[1] - body[1])
         dout = (tail[0] - body[0], tail[1] - body[1])
@@ -161,7 +161,7 @@ class GameState(BaseState):
         surface.blit(score_surface, score_rect)
 
     def draw_session_info(self, surface):
-        session_text = f"Session: {self._nb_sessions}" + (f"/{self.settings['sessions']}" if self.settings['sessions'] > 0 else "")
+        session_text = f"Session: {self.nb_sessions}" + (f"/{self.settings['sessions']}" if self.settings['sessions'] > 0 else "")
         session_surface = self.font.render(session_text, True, WHITE)
         session_rect = session_surface.get_rect(topleft=(10, 30))
         surface.blit(session_surface, session_rect)
@@ -173,7 +173,7 @@ class GameState(BaseState):
         surface.blit(score_surface, score_rect)
 
     def draw_state(self, surface):
-        state = self.interpreter.get_state(self.env.snake, self.env.board, self.env.direction)
+        state = self.interpreter.get_state(self.env.snake, self.env.board)
 
         danger_up, danger_down, danger_left, danger_right, obj_up, obj_down, obj_left, obj_right = state
 
@@ -227,11 +227,12 @@ class GameState(BaseState):
     def reset(self):
         self.env.reset()
         self._snake_timer = 0.0
-        self._bg_timer = 0.0
-        self._paused = False
-        # self._step_by_step = False
+        self._nb_steps = 0
         self._end_game = False
-        self.current_state = self.interpreter.get_state(self.env.snake, self.env.board, self.env.direction)
+        self.nb_sessions += 1
+        if self.settings["train"]:
+            self.agent.decay_epsilon()
+        self.current_state = self.interpreter.get_state(self.env.snake, self.env.board)
 
 
     def _build_board_surface(self):
@@ -255,8 +256,7 @@ class GameState(BaseState):
     def handle_events(self, event):
         if event.type == pygame.KEYDOWN:
             if self._end_game:
-                self.env.reset()
-                self._end_game = False
+                self.reset()
                 return
             if event.key == pygame.K_SPACE:
                 self._step_by_step = not self._step_by_step
@@ -265,14 +265,13 @@ class GameState(BaseState):
                 if self._step_by_step:
                     self._paused = False
                 return
+            if event.key == pygame.K_l:
+                self.reset()
+                return
 
     def update(self, dt):
         if self._nb_steps >= 500:
-            self._nb_steps = 0
-            self.env.reset()
-            self._end_game = False
-            self.agent.decay_epsilon()
-            self._nb_sessions += 1
+            self._end_game = True
             return
 
         self._bg_timer += dt
@@ -284,63 +283,40 @@ class GameState(BaseState):
             self._bg_timer -= bg_interval
             self.animated_background.update(dt)
 
-        if self.settings["train"]:
-            if self._step_by_step and self._paused:
-                return
+        snake_interval = 1.0 / self.snake_speed
 
-            action_idx = self.agent.choose_action(self.current_state)
-            print(index_to_string(action_idx))
-            self.env.direction = index_to_action_tuple(action_idx)
-            result: ActionResult = self.env.step()
-            next_state = self.interpreter.get_state(self.env.snake, self.env.board, self.env.direction)
-            reward = self.interpreter.get_reward(result, self.current_state, next_state)
-            print(reward)
-
-            if result.snake_length < 1 or result.action_state == ActionState.DEAD:
-                self._end_game = True
-
-            self.agent.update(self.current_state, action_idx, reward, next_state, self._end_game)
-            self.current_state = next_state
-
-            if self._step_by_step and not self._paused:
-                self._paused = True
-
-            if self._end_game:
-                self.env.reset()
-                self._end_game = False
-                self.agent.decay_epsilon()
-                self._nb_sessions += 1
-                return
-
-            self._nb_steps += 1
-        else:
-            snake_interval = 1.0 / self.snake_speed
-
-            if self._snake_timer >= snake_interval:
-                self._snake_timer -=  snake_interval
-                self._update_snake()
+        if self._snake_timer >= snake_interval:
+            self._snake_timer -=  snake_interval
+            self._update_snake()
 
     def _update_snake(self):
         if (self._step_by_step and self._paused) or self._end_game:
             return
 
-        state = self.interpreter.get_state(self.env.snake, self.env.board, self.env.direction)
-        action_idx = self.agent.choose_action(state)
+        action_idx = self.agent.choose_action(self.current_state)
+        self.interpreter.print_vision(self.env.board)
+        print(index_to_string(action_idx))
         self.env.direction = index_to_action_tuple(action_idx)
         result: ActionResult = self.env.step()
-        print(index_to_string(action_idx))
-        self.interpreter.print_vision(self.env.board)
+        next_state = self.interpreter.get_state(self.env.snake, self.env.board)
+        reward = self.interpreter.get_reward(result)
 
         if result.snake_length < 1 or result.action_state == ActionState.DEAD:
-            self._nb_sessions += 1
             self._end_game = True
+
+        if self.settings["train"]:
+            self.agent.update(self.current_state, action_idx, reward, next_state, self._end_game)
+
+        self.current_state = next_state
 
         if self._step_by_step and not self._paused:
             self._paused = True
 
+        self._nb_steps += 1
+
     def draw(self, surface):
         self.animated_background.draw(surface)
-        if self._end_game and not self.settings["train"]:
+        if self._end_game:
             self.draw_end_screen(surface)
             return
 

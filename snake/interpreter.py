@@ -1,9 +1,7 @@
-from collections import deque
 from typing import Deque, Tuple
 import numpy as np
 
 from snake.action import ActionResult, ActionState
-from snake.env import Coordinate
 
 
 class Interpreter:
@@ -33,10 +31,8 @@ class Interpreter:
         self.TAIL = 4
 
 
-    def get_reward(self, result: ActionResult, old_state, new_state) -> float:
+    def get_reward(self, result: ActionResult) -> float:
         if result.action_state == ActionState.NOTHING:
-            if old_state and snake_go_to_green_apple(old_state, new_state):
-                return -self.reward_nothing
             return self.reward_nothing
         elif result.action_state == ActionState.EAT_GREEN_APPLE:
             return self.reward_green_apple
@@ -50,13 +46,12 @@ class Interpreter:
     def get_state(
             self,
             snake: Deque[Tuple[int, int]],
-            board: np.ndarray,
-            current_direction: Tuple[int, int]
+            board: np.ndarray
     ) -> Tuple[int, ...]:
         head_x, head_y = snake[0]
         body = set(list(snake)[:-1])
         tail = snake[-1]
-        directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]# 0, 0, 0, 0, 0, 3, 3, 3 et # 0, 0, 0, 0, 0, 3, 3, 1
+        directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
 
         state = []
 

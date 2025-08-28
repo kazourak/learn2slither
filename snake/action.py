@@ -1,6 +1,5 @@
 from enum import Enum
 
-
 class Actions(Enum):
     UP = (0, -1)
     DOWN = (0, 1)
@@ -31,16 +30,3 @@ def index_to_action_tuple(index: int) -> tuple[int, int]:
 
 def index_to_string(index: int) -> str:
     return list(Actions)[index].name
-
-
-def get_coordinates_from_action(action):
-    if action == Actions.UP:
-        return 0, -1
-    elif action == Actions.DOWN:
-        return 0, 1
-    elif action == Actions.LEFT:
-        return -1, 0
-    elif action == Actions.RIGHT:
-        return 1, 0
-    else:
-        raise ValueError("Invalid action")

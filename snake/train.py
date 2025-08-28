@@ -5,7 +5,7 @@ from typing import List
 
 from tqdm import trange
 
-from snake.phases import optimal_phases_cfg, get_standard_phases_cfg
+from snake.phases import optimal_cfg, get_standard_phases_cfg, basic_cfg, intensive_cfg
 from snake.action import ActionResult, index_to_action_tuple, ActionState
 from snake.agent import QLearningSnakeAgent
 from snake.env import SnakeEnv
@@ -48,7 +48,7 @@ def train_with_phases(
             global_episode += 1
             env.reset()
 
-            state = interpreter.get_state(env.snake, env.board, env.direction)
+            state = interpreter.get_state(env.snake, env.board)
             total_reward = 0.0
             done = False
             step = 0
@@ -61,8 +61,8 @@ def train_with_phases(
                 if result.action_state == ActionState.DEAD:
                     done = True
 
-                next_state = interpreter.get_state(env.snake, env.board, env.direction)
-                reward = interpreter.get_reward(result, state, next_state)
+                next_state = interpreter.get_state(env.snake, env.board)
+                reward = interpreter.get_reward(result)
                 total_reward += reward
 
                 if agent.is_train:
@@ -81,14 +81,14 @@ def train_with_phases(
     return episode_rewards, phase_stats
 
 
-def train_model(l_path: str, s_path: str, episodes: int | None):
+def train_model(l_path: str, s_path: str, episodes: int | None, phase: str | None):
     env = SnakeEnv(10, 3, 1, 2)
     interpreter = Interpreter(reward_nothing=-1.14, reward_dead=-115, reward_green_apple=19.14, reward_red_apple=-21.96)
     agent = QLearningSnakeAgent(
         load_path=l_path, save_path=s_path, train=True
     )
 
-    phases_to_use = optimal_phases_cfg if not episodes else get_standard_phases_cfg(episodes)
+    phases_to_use = get_phase(phase, episodes)
 
     episode_rewards, phase_stats = train_with_phases(
         agent=agent,
@@ -100,3 +100,15 @@ def train_model(l_path: str, s_path: str, episodes: int | None):
 
     for name, stats in phase_stats.items():
         print(f"   {name}: {stats['avg_reward']:.2f} (avg), {stats['max_reward']:.2f} (max)")
+
+def get_phase(phase: str | None, episodes: int):
+    if phase is None:
+        get_standard_phases_cfg(episodes)
+    if phase == "basic":
+        return basic_cfg
+    elif phase == "intensive":
+        return intensive_cfg
+    elif phase == "optimal":
+        return optimal_cfg
+    else:
+        return get_standard_phases_cfg(1)
