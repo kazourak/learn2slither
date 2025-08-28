@@ -5,6 +5,7 @@ from collections import defaultdict
 
 ACTIONS = ['UP', 'DOWN', 'LEFT', 'RIGHT']
 
+
 class QLearningSnakeAgent:
     def __init__(self, alpha=0.15, gamma=0.95, epsilon=1.0, eps_decay=0.1,
                  eps_min=0.001, load_path=None, save_path=None, train=False):

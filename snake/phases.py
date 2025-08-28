@@ -8,6 +8,7 @@ class PhaseConfig:
     eps_start: float = 0.0
     eps_end: float = 0.0
 
+
 basic_cfg = [
     PhaseConfig(
         name="Exploration",
@@ -28,92 +29,74 @@ basic_cfg = [
     )
 ]
 
-optimal_cfg = [
+intensive_cfg = [
     PhaseConfig(
-        name="Exploration initiale",
-        episodes=70_000,
+        name="Intensive Exploration",
+        episodes=250_000,
         eps_start=1.00,
-        eps_end=0.70,
+        eps_end=0.1,
     ),
     PhaseConfig(
-        name="Exploration intensive",
-        episodes=120_000,
-        eps_start=0.70,
-        eps_end=0.30,
-    ),
-    PhaseConfig(
-        name="Équilibrage Exp/Exp",
-        episodes=95_000,
-        eps_start=0.30,
-        eps_end=0.10,
-    ),
-    PhaseConfig(
-        name="Exploitation dominante",
-        episodes=70_000,
-        eps_start=0.10,
-        eps_end=0.02,
-    ),
-    PhaseConfig(
-        name="Fine-tuning",
-        episodes=50_000,
-        eps_start=0.02,
-        eps_end=0.005,
-    ),
-    PhaseConfig(
-        name="Stabilisation",
-        episodes=40_000,
-        eps_start=0.005,
+        name="Intensive Learning",
+        episodes=250_000,
+        eps_start=0.1,
         eps_end=0.001,
+    ),
+    PhaseConfig(
+        name="Intensive Exploitation",
+        episodes=500_000,
+        eps_start=0.001,
     )
 ]
 
-intensive_cfg = [
+optimal_cfg = [
     PhaseConfig(
-        name="Phase 1: Exploration massive",
-        episodes=100_000,
+        name="Optimal Exploration 1",
+        episodes=50_000,
         eps_start=1.00,
-        eps_end=0.50,
+        eps_end=0.75,
     ),
     PhaseConfig(
-        name="Phase 2: Transition exploration",
-        episodes=150_000,
-        eps_start=0.50,
-        eps_end=0.20,
+        name="Optimal Exploration 2",
+        episodes=100_000,
+        eps_start=0.75,
+        eps_end=0.5,
     ),
     PhaseConfig(
-        name="Phase 3: Apprentissage intensif",
+        name="Optimal Learning",
         episodes=200_000,
-        eps_start=0.20,
-        eps_end=0.05,
+        eps_start=0.5,
+        eps_end=0.1,
     ),
     PhaseConfig(
-        name="Phase 4: Raffinement stratégique",
+        name="Optimal Refinement",
         episodes=150_000,
-        eps_start=0.05,
+        eps_start=0.1,
         eps_end=0.01,
     ),
     PhaseConfig(
-        name="Phase 5: Optimisation fine",
-        episodes=100_000,
+        name="Optimal Exploitation",
+        episodes=500_000,
         eps_start=0.01,
-        eps_end=0.001,
-    ),
-    PhaseConfig(
-        name="Phase 6: Consolidation",
-        episodes=50_000,
-        eps_start=0.001,
         eps_end=0.001,
     )
 ]
 
 one_episode_cfg = [
     PhaseConfig(
-        name="Exploration initiale",
+        name="One Episode",
         episodes=1,
         eps_start=1.00,
         eps_end=1.00,
     )
 ]
+
+phases = {
+    'basic': basic_cfg,
+    'intensive': intensive_cfg,
+    'optimal': optimal_cfg,
+}
+
 
 def get_standard_phases_cfg(episodes: int):
     if episodes is None or episodes <= 1:
@@ -121,7 +104,7 @@ def get_standard_phases_cfg(episodes: int):
 
     exploration_episodes = int(episodes * 0.35)  # 35%
     learning_episodes = int(episodes * 0.45)     # 45%
-    exploitation_episodes = int(episodes * 0.20) # 20%
+    exploitation_episodes = int(episodes * 0.20)  # 20%
 
     return [
         PhaseConfig(

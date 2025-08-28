@@ -1,5 +1,6 @@
 import abc
 
+
 class BaseState(abc.ABC):
     def __init__(self, game):
         self.game = game

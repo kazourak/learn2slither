@@ -5,7 +5,10 @@ from typing import List
 
 from tqdm import trange
 
-from snake.phases import optimal_cfg, get_standard_phases_cfg, basic_cfg, intensive_cfg
+from snake.phases import (optimal_cfg,
+                          get_standard_phases_cfg,
+                          basic_cfg,
+                          intensive_cfg)
 from snake.action import ActionResult, index_to_action_tuple, ActionState
 from snake.agent import QLearningSnakeAgent
 from snake.env import SnakeEnv
@@ -19,6 +22,7 @@ class PhaseConfig:
     eps_start: float = 0.0
     eps_end: float = 0.0
 
+
 def train_with_phases(
         agent: QLearningSnakeAgent,
         env: SnakeEnv,
@@ -27,15 +31,11 @@ def train_with_phases(
         max_steps_per_episode: int
 ):
     global_episode = 0
-    episode_rewards = []
-    phase_stats = {}
 
     for phase in phases:
         agent.epsilon = phase.eps_start
         agent.eps_min = phase.eps_end
         agent.calc_eps_decay(phase.episodes)
-
-        phase_rewards = []
 
         iterator = trange(
             phase.episodes,
@@ -73,24 +73,26 @@ def train_with_phases(
 
             agent.decay_epsilon()
 
-            episode_rewards.append(total_reward)
-            phase_rewards.append(total_reward)
-
     if agent.save_path:
         agent.save_model()
-    return episode_rewards, phase_stats
 
 
-def train_model(l_path: str, s_path: str, episodes: int | None, phase: str | None):
+def train_model(l_path: str,
+                s_path: str,
+                episodes: int | None,
+                phase: str | None):
     env = SnakeEnv(10, 3, 1, 2)
-    interpreter = Interpreter(reward_nothing=-1.14, reward_dead=-115, reward_green_apple=19.14, reward_red_apple=-21.96)
+    interpreter = Interpreter(reward_nothing=-1.14,
+                              reward_dead=-115,
+                              reward_green_apple=19.14,
+                              reward_red_apple=-21.96)
     agent = QLearningSnakeAgent(
         load_path=l_path, save_path=s_path, train=True
     )
 
     phases_to_use = get_phase(phase, episodes)
 
-    episode_rewards, phase_stats = train_with_phases(
+    train_with_phases(
         agent=agent,
         env=env,
         interpreter=interpreter,
@@ -98,8 +100,6 @@ def train_model(l_path: str, s_path: str, episodes: int | None, phase: str | Non
         max_steps_per_episode=5000
     )
 
-    for name, stats in phase_stats.items():
-        print(f"   {name}: {stats['avg_reward']:.2f} (avg), {stats['max_reward']:.2f} (max)")
 
 def get_phase(phase: str | None, episodes: int):
     if phase is None:

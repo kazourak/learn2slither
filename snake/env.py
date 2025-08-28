@@ -31,7 +31,7 @@ class SnakeEnv:
             seed: Optional[int] = None,
     ) -> None:
         if map_size < 3:
-            raise ValueError("map_size must be at least 3 to allow for walls and play area.")
+            raise ValueError("map_size must be at least 3.")
 
         if snake_start_length < 2:
             raise ValueError("snake_start_length must be at least 2.")
@@ -41,9 +41,11 @@ class SnakeEnv:
         self.red_apple_count = red_apple_count
         self.green_apple_count = green_apple_count
 
-        self.board: np.ndarray = np.zeros((map_size + 2, map_size + 2), dtype=int)
+        self.board: np.ndarray = np.zeros((map_size + 2, map_size + 2),
+                                          dtype=int)
         self.snake: Deque[Coordinate] = deque()
-        self.apples: dict[int, Set[Coordinate]] = {RED_APPLE: set(), GREEN_APPLE: set()}
+        self.apples: dict[int, Set[Coordinate]] = {RED_APPLE: set(),
+                                                   GREEN_APPLE: set()}
 
         self.reset()
 
@@ -55,7 +57,8 @@ class SnakeEnv:
         Reset the game state: walls, snake, and apples.x
         """
         self.snake: Deque[Coordinate] = deque()
-        self.apples: dict[int, Set[Coordinate]] = {RED_APPLE: set(), GREEN_APPLE: set()}
+        self.apples: dict[int, Set[Coordinate]] = {RED_APPLE: set(),
+                                                   GREEN_APPLE: set()}
         self._init_walls()
         self._place_snake()
         self._place_apples(RED_APPLE, self.red_apple_count)
@@ -69,7 +72,8 @@ class SnakeEnv:
         cell = self.board[new_head]
 
         if cell in (WALL, BODY) and new_head != tail:
-            return ActionResult(ActionState.DEAD, None, len(self.snake), cell)
+            return ActionResult(ActionState.DEAD, None,
+                                len(self.snake), cell)
 
         self.snake.appendleft(new_head)
         self.board[head_x, head_y] = BODY
@@ -84,7 +88,8 @@ class SnakeEnv:
             self.board[new_head] = HEAD
             self.apples[cell].remove(new_head)
             self._place_apples(cell, 1)
-            return ActionResult(ActionState.EAT_GREEN_APPLE, self.board.copy(), len(self.snake))
+            return ActionResult(ActionState.EAT_GREEN_APPLE,
+                                self.board.copy(), len(self.snake))
 
         elif cell == RED_APPLE:
             self.board[new_head] = HEAD
@@ -96,9 +101,11 @@ class SnakeEnv:
                     self.board[tail] = EMPTY
                 else:
                     return ActionResult(RED_APPLE, self.board.copy(), 0)
-            return ActionResult(ActionState.EAT_RED_APPLE, self.board.copy(), len(self.snake))
+            return ActionResult(ActionState.EAT_RED_APPLE, self.board.copy(),
+                                len(self.snake))
 
-        return ActionResult(ActionState.NOTHING, self.board.copy(), len(self.snake))
+        return ActionResult(ActionState.NOTHING, self.board.copy(),
+                            len(self.snake))
 
     def _init_walls(self) -> None:
         """Initialize the boundary walls."""
@@ -115,7 +122,8 @@ class SnakeEnv:
         max_attempts = 100
         while attempts < max_attempts:
             try:
-                points = _generate_snake_body(self.board, self.snake_start_length)
+                points = _generate_snake_body(self.board,
+                                              self.snake_start_length)
                 self.snake = deque(points)
                 head_x, head_y = points[0]
                 neck_x, neck_y = points[1]
@@ -123,10 +131,10 @@ class SnakeEnv:
                 return
             except RuntimeError:
                 attempts += 1
-        raise RuntimeError("Failed to place initial snake after multiple attempts.")
+        raise RuntimeError("Failed to place initial snake after"
+                           " multiple attempts.")
 
     def _place_apples(self, apple_type: int, count: int) -> None:
-        """Place a given number of apples of type apple_type at random empty positions."""
         empties = self._available_positions()
         if count > len(empties):
             count = len(empties)
@@ -149,7 +157,6 @@ class SnakeEnv:
 def _generate_snake_body(
         board: np.ndarray, length: int
 ) -> List[Coordinate]:
-    """Recursively generate a contiguous snake. Raises RuntimeError if placement fails."""
     if length < 1:
         raise ValueError("Length must be at least 1.")
 

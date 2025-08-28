@@ -30,7 +30,6 @@ class Interpreter:
         self.OBJ_WALL = 3
         self.TAIL = 4
 
-
     def get_reward(self, result: ActionResult) -> float:
         if result.action_state == ActionState.NOTHING:
             return self.reward_nothing
@@ -88,7 +87,6 @@ class Interpreter:
             state.append(obj)
 
         return tuple(state)
-
 
     def print_vision(self, board: np.ndarray):
         head_pos = np.where(board == self.HEAD)

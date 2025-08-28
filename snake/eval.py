@@ -1,3 +1,7 @@
+import statistics
+import numpy as np
+from tqdm import tqdm
+
 from snake.action import index_to_action_tuple, ActionResult, ActionState
 from snake.agent import QLearningSnakeAgent
 from snake.env import SnakeEnv
@@ -6,11 +10,11 @@ from snake.interpreter import Interpreter
 WALL = 1
 BODY = 3
 
-import statistics
-import numpy as np
-from tqdm import tqdm
 
-def evaluate(model_path: str, episodes: int = 5000, map_size: int = 10, max_step: int = 2500):
+def evaluate(model_path: str,
+             episodes: int = 5000,
+             map_size: int = 10,
+             max_step: int = 2500):
     eat_green_apple = 0
     eat_red_apple = 0
     dead_by_wall = 0
@@ -64,7 +68,8 @@ def evaluate(model_path: str, episodes: int = 5000, map_size: int = 10, max_step
         max_length = max(snake_lengths)
         mean_length = statistics.mean(snake_lengths)
         median_length = statistics.median(snake_lengths)
-        std_length = statistics.stdev(snake_lengths) if len(snake_lengths) > 1 else 0
+        std_length = statistics.stdev(snake_lengths)\
+            if len(snake_lengths) > 1 else 0
 
         q1_length = np.percentile(snake_lengths, 25)
         q3_length = np.percentile(snake_lengths, 75)
