@@ -102,6 +102,7 @@ def train_model(l_path: str,
 
 
 def get_phase(phase: str | None, episodes: int):
+    print(phase, episodes)
     if phase is None:
         get_standard_phases_cfg(episodes)
     if phase == "basic":
@@ -111,4 +112,4 @@ def get_phase(phase: str | None, episodes: int):
     elif phase == "optimal":
         return optimal_cfg
     else:
-        return get_standard_phases_cfg(1)
+        return get_standard_phases_cfg(episodes)

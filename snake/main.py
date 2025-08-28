@@ -70,7 +70,7 @@ if __name__ == "__main__":
     parser.add_argument("--load", type=str, help="Load a saved model")
     parser.add_argument("--sessions", type=int, default=100,
                         help="Number of sessions to train or eval.")
-    parser.add_argument("--phase", type=str, default="basic_phase",
+    parser.add_argument("--phase", type=str,
                         help="Choose a phase to train. Phases: "
                              "'basic', 'intensive', 'optimal'")
     parser.add_argument("--map_size", type=int, default=10,
@@ -110,4 +110,5 @@ if __name__ == "__main__":
         if args.visual:
             Game(settings).run()
         else:
+            print(args.sessions)
             train_model(args.load, args.save, args.sessions, args.phase)

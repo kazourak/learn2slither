@@ -115,16 +115,3 @@ class Interpreter:
                 else:
                     row += '  '
             print(row)
-
-
-def snake_go_to_green_apple(state: tuple, new_state: tuple) -> bool:
-    last_state = state[-4:]
-    last_new_state = new_state[-4:]
-
-    if 0 not in last_state or 0 not in last_new_state:
-        return False
-
-    for i in range(4):
-        if last_state[i] == last_new_state[i] == 0:
-            return True
-    return False
