@@ -120,7 +120,6 @@ class GameState(BaseState):
         }
 
     def set_grid_size(self, new_size):
-        """Change le nombre de cellules de la grille"""
         self.grid_size = new_size
         self.cell_size = self.board_size // self.grid_size
         self.board_size = self.cell_size * self.grid_size
