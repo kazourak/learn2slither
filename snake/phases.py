@@ -99,7 +99,6 @@ phases = {
 
 
 def get_standard_phases_cfg(episodes: int):
-    print(episodes)
     if episodes is None or episodes <= 1:
         return one_episode_cfg
 

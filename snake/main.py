@@ -110,5 +110,4 @@ if __name__ == "__main__":
         if args.visual:
             Game(settings).run()
         else:
-            print(args.sessions)
             train_model(args.load, args.save, args.sessions, args.phase)
