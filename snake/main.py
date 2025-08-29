@@ -57,8 +57,8 @@ def validate_args(args):
         return "Error: Map size must be between 5 and 20"
 
     if (args.sessions is not None and
-            (args.sessions < 1 or args.sessions > 999999999)):
-        return "Error: Sessions must be between 1 and 999999999"
+            (args.sessions < 1 or args.sessions > 999999)):
+        return "Error: Sessions must be between 1 and 999999"
 
     return None
 
