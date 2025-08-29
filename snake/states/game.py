@@ -114,9 +114,9 @@ class GameState(BaseState):
 
         self.apple_sprites = {
             "RED_APPLE": scale(
-                self.game.loader.load_image("RED_APPLE.png")),
+                self.game.loader.load_image("red_apple.png")),
             "GREEN_APPLE": scale(
-                self.game.loader.load_image("GREEN_APPLE.png")),
+                self.game.loader.load_image("green_apple.png")),
         }
 
     def set_grid_size(self, new_size):
